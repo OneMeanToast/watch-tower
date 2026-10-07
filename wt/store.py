@@ -1,0 +1,469 @@
+"""SQLite storage. Vectors are float32 blobs queried with sqlite-vec when it loads."""
+
+from __future__ import annotations
+
+import json
+import logging
+import sqlite3
+import struct
+import time
+from datetime import datetime, timedelta
+from pathlib import Path
+
+from wt.embed import cosine
+from wt.models import Item, MatchResult
+from wt.policy import PriorAlert
+from wt.text import utcnow
+
+log = logging.getLogger("wt.store")
+
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS meta (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS items (
+  id TEXT PRIMARY KEY,
+  url TEXT,
+  url_hash TEXT,
+  content_hash TEXT,
+  source TEXT NOT NULL,
+  feed_id TEXT NOT NULL DEFAULT '',
+  ts TEXT NOT NULL,
+  title TEXT NOT NULL,
+  text TEXT NOT NULL,
+  lang TEXT NOT NULL,
+  authors TEXT NOT NULL DEFAULT '[]',
+  simhash TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_items_url_hash
+  ON items(url_hash) WHERE url_hash IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_items_content ON items(content_hash);
+CREATE INDEX IF NOT EXISTS idx_items_ts ON items(ts);
+CREATE TABLE IF NOT EXISTS embeddings (
+  entity_id TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  label TEXT NOT NULL DEFAULT '',
+  dim INTEGER NOT NULL,
+  vector BLOB NOT NULL,
+  PRIMARY KEY (entity_id, kind, label)
+);
+CREATE TABLE IF NOT EXISTS matches (
+  id TEXT PRIMARY KEY,
+  item_id TEXT NOT NULL,
+  indicator_id TEXT NOT NULL,
+  cosine REAL NOT NULL,
+  keyword_hit INTEGER NOT NULL,
+  p_hit REAL NOT NULL,
+  severity REAL NOT NULL,
+  category TEXT,
+  confidence REAL NOT NULL,
+  action TEXT NOT NULL,
+  reason TEXT NOT NULL,
+  backend TEXT NOT NULL,
+  answers_json TEXT NOT NULL DEFAULT '{}',
+  created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS alerts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  match_id TEXT NOT NULL,
+  indicator_id TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  body TEXT NOT NULL,
+  status TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS feedback (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  match_id TEXT NOT NULL,
+  label TEXT NOT NULL CHECK (label IN ('hit', 'miss')),
+  note TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL
+);
+"""
+
+
+def pack_f32(vector: list[float]) -> bytes:
+    return struct.pack(f"<{len(vector)}f", *[float(v) for v in vector])
+
+
+def unpack_f32(blob: bytes) -> list[float]:
+    count = len(blob) // 4
+    return list(struct.unpack(f"<{count}f", blob[: count * 4]))
+
+
+class Store:
+    def __init__(self, path: str | Path):
+        self.path = Path(path)
+        if str(self.path) != ":memory:":
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+        self.conn = sqlite3.connect(self.path)
+        self.conn.row_factory = sqlite3.Row
+        self.conn.execute("PRAGMA foreign_keys = ON")
+        if str(self.path) != ":memory:":
+            self.conn.execute("PRAGMA journal_mode = WAL")
+        self.has_vec, self.vec_version = self._load_vec()
+        self.conn.executescript(SCHEMA)
+        self.conn.commit()
+
+    def _load_vec(self) -> tuple[bool, str]:
+        try:
+            import sqlite_vec
+        except ImportError:
+            log.info("sqlite-vec is not installed; cosine runs in Python")
+            return False, ""
+        try:
+            self.conn.enable_load_extension(True)
+            sqlite_vec.load(self.conn)
+            self.conn.enable_load_extension(False)
+            version = self.conn.execute("SELECT vec_version()").fetchone()[0]
+            return True, str(version)
+        except Exception as exc:
+            log.info("sqlite-vec did not load (%s); cosine runs in Python", exc)
+            return False, ""
+
+    @property
+    def vector_backend(self) -> str:
+        if self.has_vec:
+            return f"sqlite-vec {self.vec_version}"
+        return "python"
+
+    def close(self) -> None:
+        self.conn.close()
+
+    def meta_get(self, key: str) -> str | None:
+        row = self.conn.execute("SELECT value FROM meta WHERE key = ?", (key,)).fetchone()
+        return None if row is None else str(row["value"])
+
+    def meta_set(self, key: str, value: str) -> None:
+        self.conn.execute(
+            "INSERT INTO meta(key, value) VALUES(?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+            (key, value),
+        )
+        self.conn.commit()
+
+    def wait_rate_limit(self, key: str, seconds: float) -> None:
+        last = self.meta_get(f"ratelimit:{key}")
+        if last:
+            delay = seconds - (time.time() - float(last))
+            if delay > 0:
+                time.sleep(delay)
+        self.meta_set(f"ratelimit:{key}", str(time.time()))
+
+    def url_exists(self, url_hash: str | None) -> bool:
+        if not url_hash:
+            return False
+        row = self.conn.execute(
+            "SELECT 1 FROM items WHERE url_hash = ?", (url_hash,)
+        ).fetchone()
+        return row is not None
+
+    def content_exists(self, content_hash: str) -> bool:
+        row = self.conn.execute(
+            "SELECT 1 FROM items WHERE content_hash = ?", (content_hash,)
+        ).fetchone()
+        return row is not None
+
+    def simhash_near(self, simhash: int, *, max_hamming: int, limit: int = 5000) -> bool:
+        rows = self.conn.execute(
+            "SELECT simhash FROM items ORDER BY ts DESC LIMIT ?", (limit,)
+        ).fetchall()
+        for row in rows:
+            if (int(row["simhash"], 16) ^ simhash).bit_count() <= max_hamming:
+                return True
+        return False
+
+    def cosine_near(self, vector: list[float], *, min_cosine: float, limit: int = 500) -> bool:
+        for _item_id, score in self.nearest_items(vector, limit=limit):
+            if score >= min_cosine:
+                return True
+        return False
+
+    def nearest_items(self, vector: list[float], *, limit: int = 500) -> list[tuple[str, float]]:
+        blob = pack_f32(vector)
+        if self.has_vec:
+            rows = self.conn.execute(
+                """
+                SELECT e.entity_id AS entity_id,
+                       1 - vec_distance_cosine(e.vector, ?) AS cosine
+                FROM embeddings e
+                JOIN items i ON i.id = e.entity_id
+                WHERE e.kind = 'item' AND e.label = ''
+                ORDER BY i.ts DESC
+                LIMIT ?
+                """,
+                (blob, limit),
+            ).fetchall()
+            return [(str(row["entity_id"]), float(row["cosine"])) for row in rows]
+        rows = self.conn.execute(
+            """
+            SELECT e.entity_id AS entity_id, e.vector AS vector
+            FROM embeddings e
+            JOIN items i ON i.id = e.entity_id
+            WHERE e.kind = 'item' AND e.label = ''
+            ORDER BY i.ts DESC
+            LIMIT ?
+            """,
+            (limit,),
+        ).fetchall()
+        scored = [
+            (str(row["entity_id"]), cosine(unpack_f32(row["vector"]), vector)) for row in rows
+        ]
+        return scored
+
+    def sql_cosine(self, left: list[float], right: list[float]) -> float:
+        """Cosine similarity. Uses sqlite-vec's distance function when the extension is loaded."""
+        if len(left) != len(right):
+            raise ValueError("vectors have different dimensions")
+        blob_l, blob_r = pack_f32(left), pack_f32(right)
+        if self.has_vec:
+            distance = self.conn.execute(
+                "SELECT vec_distance_cosine(?, ?)", (blob_l, blob_r)
+            ).fetchone()[0]
+            return 1.0 - float(distance)
+        return cosine(left, right)
+
+    def upsert_item(
+        self,
+        item: Item,
+        *,
+        url_hash: str | None,
+        content_hash: str,
+        simhash: int,
+        vector: list[float],
+    ) -> None:
+        now = utcnow().isoformat()
+        self.conn.execute(
+            """
+            INSERT INTO items (
+              id, url, url_hash, content_hash, source, feed_id, ts, title, text,
+              lang, authors, simhash, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+              title = excluded.title,
+              text = excluded.text,
+              ts = excluded.ts,
+              simhash = excluded.simhash,
+              content_hash = excluded.content_hash
+            """,
+            (
+                item.id,
+                item.url,
+                url_hash,
+                content_hash,
+                item.source,
+                item.feed_id,
+                item.ts.isoformat(),
+                item.title,
+                item.text,
+                item.lang,
+                json.dumps(item.authors),
+                f"{simhash:016x}",
+                now,
+            ),
+        )
+        self.upsert_embedding(item.id, "item", "", vector)
+        self.conn.commit()
+
+    def upsert_embedding(self, entity_id: str, kind: str, label: str, vector: list[float]) -> None:
+        existing = self.meta_get("embed_dim")
+        if existing and int(existing) != len(vector):
+            raise RuntimeError(
+                f"embedding dimension changed from {existing} to {len(vector)}. "
+                "Delete the database before switching embedders."
+            )
+        if not existing:
+            self.conn.execute(
+                "INSERT INTO meta(key, value) VALUES('embed_dim', ?) "
+                "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+                (str(len(vector)),),
+            )
+        self.conn.execute(
+            """
+            INSERT INTO embeddings (entity_id, kind, label, dim, vector)
+            VALUES (?, ?, ?, ?, ?)
+            ON CONFLICT(entity_id, kind, label) DO UPDATE SET
+              dim = excluded.dim,
+              vector = excluded.vector
+            """,
+            (entity_id, kind, label, len(vector), pack_f32(vector)),
+        )
+
+    def max_indicator_cosine(self, vector: list[float], indicator_id: str) -> float:
+        blob = pack_f32(vector)
+        if self.has_vec:
+            row = self.conn.execute(
+                """
+                SELECT MAX(1 - vec_distance_cosine(vector, ?)) AS cosine
+                FROM embeddings
+                WHERE entity_id = ?
+                  AND kind = 'indicator'
+                  AND (label = '' OR label LIKE 'pos:%')
+                """,
+                (blob, indicator_id),
+            ).fetchone()
+            if row is None or row["cosine"] is None:
+                return 0.0
+            return float(row["cosine"])
+        rows = self.conn.execute(
+            """
+            SELECT vector FROM embeddings
+            WHERE entity_id = ? AND kind = 'indicator'
+              AND (label = '' OR label LIKE 'pos:%')
+            """,
+            (indicator_id,),
+        ).fetchall()
+        if not rows:
+            return 0.0
+        return max(cosine(unpack_f32(row["vector"]), vector) for row in rows)
+
+    def commit(self) -> None:
+        self.conn.commit()
+
+    def save_match(self, result: MatchResult, answers: dict) -> None:
+        self.conn.execute(
+            """
+            INSERT INTO matches (
+              id, item_id, indicator_id, cosine, keyword_hit, p_hit, severity,
+              category, confidence, action, reason, backend, answers_json, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+              cosine = excluded.cosine,
+              keyword_hit = excluded.keyword_hit,
+              p_hit = excluded.p_hit,
+              severity = excluded.severity,
+              category = excluded.category,
+              confidence = excluded.confidence,
+              action = excluded.action,
+              reason = excluded.reason,
+              backend = excluded.backend,
+              answers_json = excluded.answers_json,
+              created_at = excluded.created_at
+            """,
+            (
+                result.match_id,
+                result.item_id,
+                result.indicator_id,
+                result.cosine,
+                1 if result.keyword_hit else 0,
+                result.p_hit,
+                result.severity,
+                result.category,
+                result.confidence,
+                result.action,
+                result.reason,
+                result.backend,
+                json.dumps(answers),
+                utcnow().isoformat(),
+            ),
+        )
+        self.conn.commit()
+
+    def has_push(self, match_id: str) -> bool:
+        row = self.conn.execute(
+            "SELECT 1 FROM alerts WHERE match_id = ? AND kind = 'push'", (match_id,)
+        ).fetchone()
+        return row is not None
+
+    def record_alert(self, result: MatchResult, *, kind: str, body: str, status: str) -> None:
+        self.conn.execute(
+            """
+            INSERT INTO alerts (match_id, indicator_id, kind, body, status, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (result.match_id, result.indicator_id, kind, body, status, utcnow().isoformat()),
+        )
+        self.conn.commit()
+
+    def recent_push_priors(self, indicator_id: str, *, since: datetime) -> list[PriorAlert]:
+        rows = self.conn.execute(
+            """
+            SELECT i.url_hash AS url_hash, i.simhash AS simhash, e.vector AS vector,
+                   a.created_at AS created_at
+            FROM alerts a
+            JOIN matches m ON m.id = a.match_id
+            JOIN items i ON i.id = m.item_id
+            LEFT JOIN embeddings e
+              ON e.entity_id = i.id AND e.kind = 'item' AND e.label = ''
+            WHERE a.indicator_id = ? AND a.kind = 'push' AND a.created_at >= ?
+            """,
+            (indicator_id, since.isoformat()),
+        ).fetchall()
+        priors: list[PriorAlert] = []
+        for row in rows:
+            if row["vector"] is None:
+                continue
+            created = datetime.fromisoformat(row["created_at"])
+            priors.append(
+                PriorAlert(
+                    url_hash=row["url_hash"] or "",
+                    simhash=int(row["simhash"], 16),
+                    vector=unpack_f32(row["vector"]),
+                    created_at=created,
+                )
+            )
+        return priors
+
+    def get_match(self, match_id: str) -> sqlite3.Row | None:
+        return self.conn.execute("SELECT * FROM matches WHERE id = ?", (match_id,)).fetchone()
+
+    def get_item(self, item_id: str) -> sqlite3.Row | None:
+        return self.conn.execute("SELECT * FROM items WHERE id = ?", (item_id,)).fetchone()
+
+    def add_feedback(self, match_id: str, label: str, *, note: str = "") -> dict:
+        match = self.get_match(match_id)
+        if match is None:
+            raise KeyError(match_id)
+        if label not in {"hit", "miss"}:
+            raise ValueError(label)
+        created = utcnow().isoformat()
+        self.conn.execute(
+            "INSERT INTO feedback (match_id, label, note, created_at) VALUES (?, ?, ?, ?)",
+            (match_id, label, note, created),
+        )
+        self.conn.commit()
+        item = self.get_item(match["item_id"])
+        return {
+            "match_id": match_id,
+            "indicator_id": match["indicator_id"],
+            "item_id": match["item_id"],
+            "label": label,
+            "title": "" if item is None else item["title"],
+            "text": "" if item is None else item["text"],
+            "url": "" if item is None else (item["url"] or ""),
+            "source": "" if item is None else item["source"],
+            "p_hit": match["p_hit"],
+            "severity": match["severity"],
+            "created_at": created,
+            "note": note,
+        }
+
+    def digest_since(self, since_iso: str | None) -> list[sqlite3.Row]:
+        if since_iso:
+            return self.conn.execute(
+                """
+                SELECT * FROM matches
+                WHERE action = 'digest' AND created_at > ?
+                ORDER BY created_at
+                """,
+                (since_iso,),
+            ).fetchall()
+        return self.conn.execute(
+            "SELECT * FROM matches WHERE action = 'digest' ORDER BY created_at"
+        ).fetchall()
+
+    def counts(self) -> dict[str, int]:
+        def _count(table: str) -> int:
+            return int(self.conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0])
+
+        return {
+            "items": _count("items"),
+            "matches": _count("matches"),
+            "alerts": _count("alerts"),
+            "feedback": _count("feedback"),
+        }
+
+
+def cooldown_since(now: datetime, cooldown: timedelta) -> datetime:
+    return now - cooldown

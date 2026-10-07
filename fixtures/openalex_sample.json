@@ -1,0 +1,19 @@
+{
+  "results": [
+    {
+      "id": "https://openalex.org/W1",
+      "doi": "https://doi.org/10.0000/example.jepa",
+      "display_name": "An open LLM-JEPA checkpoint",
+      "publication_date": "2026-10-01",
+      "abstract_inverted_index": {
+        "Open": [0],
+        "weights": [1],
+        "for": [2],
+        "JEPA.": [3]
+      },
+      "authorships": [
+        {"author": {"display_name": "A. Researcher"}}
+      ]
+    }
+  ]
+}

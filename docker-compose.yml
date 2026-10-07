@@ -1,0 +1,22 @@
+# Optional packaging. Kev is not vendored: run it on the host (MLX on a Mac)
+# and point WT_DECIDER_URL at it. ntfy is behind the "alerts" profile.
+services:
+  watchtower:
+    build: .
+    command: ["demo"]
+    volumes:
+      - ./config:/app/config:ro
+      - ./data:/app/data
+    environment:
+      WT_DB: /app/data/watchtower.db
+      WT_DECIDER: ${WT_DECIDER:-lexical}
+      WT_DECIDER_URL: ${WT_DECIDER_URL:-http://host.docker.internal:8009}
+      WT_EMBEDDER: ${WT_EMBEDDER:-hashing}
+      WT_NTFY_URL: ${WT_NTFY_URL:-}
+
+  ntfy:
+    image: binwiederhier/ntfy
+    profiles: ["alerts"]
+    command: serve
+    ports:
+      - "8093:80"

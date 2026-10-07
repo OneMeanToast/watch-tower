@@ -1,0 +1,75 @@
+[
+  {
+    "url": "https://example.test/papers/llm-jepa-release",
+    "source": "arxiv",
+    "feed_id": "cs.CL",
+    "ts": "2026-10-06T15:00:00+00:00",
+    "title": "Meta releases open weights for an LLM-JEPA text embedding model",
+    "text": "Meta releases open weights for an LLM-JEPA text embedding model under Apache-2.0, with training code on GitHub. The checkpoint is a joint embedding predictive architecture for text.",
+    "authors": ["A. Researcher"]
+  },
+  {
+    "url": "https://example.test/blog/what-is-jepa",
+    "source": "rss",
+    "feed_id": "ai-news",
+    "ts": "2026-10-06T12:00:00+00:00",
+    "title": "What is JEPA? A short explainer",
+    "text": "A blog post explaining what JEPA is and how joint embedding predictive architectures differ from generative models. No weights and no code release."
+  },
+  {
+    "url": "https://example.test/news/open-weight-7b",
+    "source": "rss",
+    "feed_id": "ai-news",
+    "ts": "2026-10-05T18:00:00+00:00",
+    "title": "University lab releases a 7B open-weight language model",
+    "text": "A university lab released a new 7B open-weight language model on Hugging Face under Apache-2.0. The weights and inference code are public. This is a standard transformer, not a JEPA model."
+  },
+  {
+    "url": "https://example.test/papers/kev-0-8b",
+    "source": "arxiv",
+    "feed_id": "cs.AI",
+    "ts": "2026-10-04T09:00:00+00:00",
+    "title": "Kev 0.8B open decision model released for Apple Silicon",
+    "text": "Kev 0.8B, an Apache-2.0 decision model, was released for local Apple Silicon. It answers System One noul, choice, and score questions and returns calibrated probabilities."
+  },
+  {
+    "url": "https://example.test/news/ai-act-amendment",
+    "source": "gdelt",
+    "feed_id": "q2",
+    "ts": "2026-10-03T11:00:00+00:00",
+    "title": "Commission proposes an AI Act amendment on open-weight models",
+    "text": "The European Commission proposed an amendment to the AI Act regulating open-weight models. The regulation is scheduled for a vote. An AI Act amendment mentions open-weight models but no weights were released."
+  },
+  {
+    "url": "https://example.test/papers/mmlu-sota",
+    "source": "arxiv",
+    "feed_id": "cs.CL",
+    "ts": "2026-10-02T16:30:00+00:00",
+    "title": "New paper reports state-of-the-art on MMLU",
+    "text": "A new paper reports state-of-the-art results on the MMLU benchmark and calls the result a new SOTA for knowledge tests."
+  },
+  {
+    "url": "https://example.test/papers/llm-jepa-paraphrase",
+    "source": "arxiv",
+    "feed_id": "cs.CL",
+    "ts": "2026-10-06T18:00:00+00:00",
+    "title": "LLM-JEPA checkpoints now public",
+    "text": "Researchers at Meta have published Apache-2.0 checkpoints and training code for a text JEPA model they call LLM-JEPA."
+  },
+  {
+    "url": "https://example.test/sports/lakers",
+    "source": "rss",
+    "feed_id": "sports",
+    "ts": "2026-10-06T20:00:00+00:00",
+    "title": "Lakers defeat Celtics in overtime",
+    "text": "The Lakers defeated the Celtics 118-114 in overtime behind a late run. Playoff seeding remains unchanged."
+  },
+  {
+    "url": "https://example.test/news/ml-conference",
+    "source": "rss",
+    "feed_id": "ai-news",
+    "ts": "2026-10-01T08:00:00+00:00",
+    "title": "Machine learning conference opens in Vienna",
+    "text": "A conference schedule mentions talks and datasets but no new results. No model release was announced."
+  }
+]

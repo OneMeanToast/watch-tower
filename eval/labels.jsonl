@@ -1,0 +1,15 @@
+{"url": "https://example.test/papers/llm-jepa-release", "indicator_id": "ai-open-text-jepa", "label": "hit"}
+{"url": "https://example.test/papers/llm-jepa-release", "indicator_id": "open-weight-model-release", "label": "hit"}
+{"url": "https://example.test/papers/llm-jepa-paraphrase", "indicator_id": "ai-open-text-jepa", "label": "hit"}
+{"url": "https://example.test/blog/what-is-jepa", "indicator_id": "ai-open-text-jepa", "label": "miss"}
+{"url": "https://example.test/news/open-weight-7b", "indicator_id": "open-weight-model-release", "label": "hit"}
+{"url": "https://example.test/news/open-weight-7b", "indicator_id": "ai-open-text-jepa", "label": "miss"}
+{"url": "https://example.test/papers/kev-0-8b", "indicator_id": "jev-like-decision-model", "label": "hit"}
+{"url": "https://example.test/papers/kev-0-8b", "indicator_id": "ai-open-text-jepa", "label": "miss"}
+{"url": "https://example.test/news/ai-act-amendment", "indicator_id": "ai-policy-regulation", "label": "hit"}
+{"url": "https://example.test/news/ai-act-amendment", "indicator_id": "open-weight-model-release", "label": "miss"}
+{"url": "https://example.test/news/ai-act-amendment", "indicator_id": "ai-open-text-jepa", "label": "miss"}
+{"url": "https://example.test/papers/mmlu-sota", "indicator_id": "major-benchmark-sota", "label": "hit"}
+{"url": "https://example.test/sports/lakers", "indicator_id": "ai-open-text-jepa", "label": "miss"}
+{"url": "https://example.test/news/ml-conference", "indicator_id": "open-weight-model-release", "label": "miss"}
+{"url": "https://example.test/papers/llm-jepa-release", "indicator_id": "jev-like-decision-model", "label": "miss"}

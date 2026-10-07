@@ -1,0 +1,12 @@
+{
+  "articles": [
+    {
+      "url": "https://news.example.test/ai-act?utm_source=gdelt",
+      "title": "Commission proposes an AI Act amendment",
+      "seendate": "20261003T110000Z",
+      "language": "English",
+      "domain": "news.example.test",
+      "sourcecountry": "BE"
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+id: open-weight-model-release
+name: Open-weight model release
+description: >
+  Someone publishes downloadable weights for a language model, usually on
+  Hugging Face or GitHub, under a license that lets other people run them.
+sources: [arxiv, rss:ai-news, bluesky, gdelt]
+prefilter:
+  min_cosine: 0.32
+  keywords_any: ["open-weight", "open weights", "weights released", "model weights"]
+positives:
+  - "A university lab released a new 7B open-weight language model on Hugging Face under Apache-2.0 with public weights and inference code"
+negatives:
+  - "An AI Act amendment mentions open-weight models but no weights were released"
+questions:
+  hit:
+    type: noul
+    instructions: "Does this item announce that model weights are newly available to download?"
+  severity:
+    type: score
+    instructions: "How important is this release for people who run models locally?"
+    criteria: ["trivial", "minor", "notable", "major", "field-changing"]
+  kind:
+    type: choice
+    instructions: "What kind of item is this?"
+    criteria:
+      release: "weights or code released"
+      paper: "paper only"
+      regulation: "policy or regulation"
+      commentary: "opinion or explainer"
+policy:
+  alert_if: "hit >= 0.85 and severity >= 2"
+  digest_if: "hit >= 0.5"
+  cooldown: 12h
+alert:
+  channels: []

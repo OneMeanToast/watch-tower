@@ -1,0 +1,36 @@
+id: ai-open-text-jepa
+name: Open-weight text JEPA released
+description: >
+  A lab or individual releases open weights for a JEPA-style
+  language or text-embedding model, or ships code for one.
+sources: [arxiv, rss:ai-news, bluesky, gdelt]
+prefilter:
+  min_cosine: 0.32
+  keywords_any: ["JEPA", "joint embedding predictive", "LLM-JEPA", "VL-JEPA"]
+  entities_any: []
+positives:
+  - "Meta releases open weights for an LLM-JEPA text embedding model under Apache-2.0 with training code on GitHub"
+negatives:
+  - "A blog post explaining what JEPA is"
+  - "This is a standard transformer language model, not a JEPA model, and the weights are a normal Hugging Face transformer release"
+questions:
+  hit:
+    type: noul
+    instructions: "Does this item report a NEW open-weight JEPA-style text or LLM model, or code for one?"
+  severity:
+    type: score
+    instructions: "How significant is this for someone building text-classification systems?"
+    criteria: ["trivial", "minor", "notable", "major", "field-changing"]
+  kind:
+    type: choice
+    instructions: "What kind of item is this?"
+    criteria:
+      release: "weights or code released"
+      paper: "paper only"
+      commentary: "opinion or explainer"
+policy:
+  alert_if: "hit >= 0.85 and severity >= 2"
+  digest_if: "hit >= 0.5"
+  cooldown: 6h
+alert:
+  channels: []

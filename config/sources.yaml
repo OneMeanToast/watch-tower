@@ -1,0 +1,50 @@
+# Live sources. Demo mode ignores this file and reads fixtures/items.json.
+# Every adapter skips cleanly when it is unconfigured or the network fails.
+
+rss:
+  per_feed: 20
+  feeds:
+    - id: hackernews-ai
+      url: https://hnrss.org/newest?q=AI
+    - id: arxiv-cs-ai-rss
+      url: https://rss.arxiv.org/rss/cs.AI
+    - id: techcrunch-ai
+      url: https://techcrunch.com/category/artificial-intelligence/feed/
+
+arxiv:
+  categories: ["cs.AI", "cs.CL", "cs.LG"]
+  max_results: 20
+
+gdelt:
+  max_records: 15
+  queries:
+    - '(open-weight OR "open source") (model OR LLM) (release OR released)'
+    - '("AI Act" OR "artificial intelligence regulation")'
+
+openalex:
+  # Optional. A free key in WT_OPENALEX_KEY raises the daily budget.
+  # Casual calls work without one until the keyless budget is spent.
+  search: "open weight language model"
+  per_page: 10
+
+bluesky:
+  # Sampled window per cycle, not a gapless firehose. Set enabled: true and
+  # pip install 'watch-tower[bluesky]'.
+  enabled: false
+  collect_seconds: 8
+  max_posts: 40
+  skip_replies: true
+  # Public Jetstream subscribe endpoint (no account for the live tail).
+  endpoint: wss://jetstream2.us-east.bsky.network/subscribe
+  dids: []
+  keywords_any: ["JEPA", "open-weight", "open weights", "System One"]
+
+mastodon:
+  instances:
+    - https://mastodon.social
+  hashtags: []
+  limit: 20
+
+# Kept off. wt.ingest.x_paid refuses to run even if this is flipped on.
+x:
+  enabled: false

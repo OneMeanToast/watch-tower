@@ -2,12 +2,17 @@
 
 Backends:
   lexical     always available, offline, heuristic probabilities
-  systemone   POST /v1/systemone (Kev, Von, or TinyJev)
+  systemone   POST /v1/systemone (Kev 1.0, or another server with the same shape)
   ollama      local chat model forced to return JSON
   auto        probe systemone, then ollama, else lexical
 
+Kev's own server already runs on MLX on Apple Silicon
+(`python -m kev.serve --run jaredpalmer/kev-4b@v1.0`). Third-party MLX
+wrappers that score generic Qwen chat models are not wired in.
+
 If the selected server errors and fallback is on, the item is scored lexically
-instead of being dropped.
+instead of being dropped. State sent to the model is the spotlight fence:
+title, about 300 words, and the matched snippets.
 """
 
 from __future__ import annotations
@@ -21,7 +26,7 @@ from typing import Protocol
 import httpx
 
 from wt.models import Candidate, Decision, Indicator, Item
-from wt.safety import fence_untrusted, sanitize_label
+from wt.safety import sanitize_label, state_for_item
 from wt.scoring import (
     choice_confidence,
     lexical_p_hit,
@@ -184,8 +189,11 @@ class SystemOneDecider:
         questions: dict = {}
         for cand in candidates:
             questions.update(questions_payload(cand.indicator))
+        terms: list[str] = []
+        for cand in candidates:
+            terms.extend(cand.matched_terms)
         body: dict = {
-            "state": fence_untrusted(item.title, item.text, item.url),
+            "state": state_for_item(item.title, item.text, item.url, terms),
             "questions": questions,
         }
         if self.model:
@@ -207,6 +215,45 @@ class SystemOneDecider:
         except json.JSONDecodeError as exc:
             raise DeciderError("systemone returned non-JSON") from exc
         return _parse_systemone(payload, candidates)
+
+    def same_event(self, item: Item, other_title: str, other_text: str) -> bool:
+        """One noul question: is this the same real-world event as the other item?"""
+        body = {
+            "state": state_for_item(
+                item.title,
+                f"{item.text}\n\nOTHER ITEM TITLE: {other_title}\nOTHER ITEM BODY:\n{other_text}",
+                item.url,
+            ),
+            "questions": {
+                "same-event": {
+                    "type": "noul",
+                    "instructions": (
+                        "Do these two items describe the same real-world event or announcement, "
+                        "even if the wording or outlet differs?"
+                    ),
+                }
+            },
+        }
+        if self.model:
+            body["model"] = self.model
+        headers = {"content-type": "application/json"}
+        if self.api_key:
+            headers["authorization"] = f"Bearer {self.api_key}"
+        try:
+            with httpx.Client(timeout=self.timeout, transport=self._transport) as client:
+                response = client.post(f"{self.base_url}/v1/systemone", json=body, headers=headers)
+        except httpx.HTTPError as exc:
+            raise DeciderError(f"systemone same-event request failed: {exc}") from exc
+        if response.status_code >= 400:
+            raise DeciderError(f"systemone HTTP {response.status_code}: {response.text[:300]}")
+        try:
+            payload = response.json()
+        except json.JSONDecodeError as exc:
+            raise DeciderError("systemone returned non-JSON") from exc
+        answer = (payload.get("answers") or {}).get("same-event") or {}
+        if "noul" not in answer:
+            raise DeciderError("systemone same-event response missing noul")
+        return float(answer["noul"]) >= 0.5
 
 
 def _parse_systemone(payload: dict, candidates: list[Candidate]) -> dict[str, Decision]:
@@ -289,7 +336,7 @@ class OllamaDecider:
     def _one(self, item: Item, cand: Candidate) -> Decision:
         indicator = cand.indicator
         user = (
-            fence_untrusted(item.title, item.text, item.url)
+            state_for_item(item.title, item.text, item.url, cand.matched_terms)
             + "\n\nQuestions:\n"
             + json.dumps(questions_payload(indicator), ensure_ascii=False)
         )
@@ -371,6 +418,16 @@ class FallbackDecider:
         except DeciderError as exc:
             log.warning("%s failed (%s); using %s", self.primary.name, exc, self.fallback.name)
             return self.fallback.decide_many(item, candidates)
+
+    def same_event(self, item: Item, other_title: str, other_text: str) -> bool:
+        method = getattr(self.primary, "same_event", None)
+        if method is None:
+            return True
+        try:
+            return bool(method(item, other_title, other_text))
+        except DeciderError as exc:
+            log.warning("same-event question failed (%s); grouping from the lexical signals", exc)
+            return True
 
 
 def probe_systemone(base_url: str, timeout: float = 2.0) -> bool:

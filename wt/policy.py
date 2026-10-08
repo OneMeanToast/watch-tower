@@ -175,10 +175,46 @@ def decide_action(
         "confidence": float(confidence),
     }
     if compile_expr(indicator.policy.alert_if)(env):
-        return "push", "alert_if matched"
-    if indicator.policy.digest_if and compile_expr(indicator.policy.digest_if)(env):
-        return "digest", "digest_if matched"
-    return "drop", "below thresholds"
+        action, reason = "push", "alert_if matched"
+    elif indicator.policy.digest_if and compile_expr(indicator.policy.digest_if)(env):
+        action, reason = "digest", "digest_if matched"
+    else:
+        action, reason = "drop", "below thresholds"
+    return apply_confidence_cascade(
+        action,
+        reason,
+        confidence=float(confidence),
+        push_min=float(indicator.policy.push_min_confidence),
+        uncertain_min=float(indicator.policy.uncertain_min),
+    )
+
+
+def apply_confidence_cascade(
+    action: str,
+    reason: str,
+    *,
+    confidence: float,
+    push_min: float,
+    uncertain_min: float,
+) -> tuple[str, str]:
+    """Keep a confident push. Park the middle band in the digest.
+
+    ``push_min`` of 0 leaves the threshold result unchanged, which is the
+    default for an indicator that does not set the band.
+    """
+    if action != "push" or push_min <= 0:
+        return action, reason
+    if confidence >= push_min:
+        return action, reason
+    if confidence >= uncertain_min:
+        return (
+            "digest",
+            f"uncertain: confidence {confidence:.2f} below push_min_confidence {push_min:.2f}",
+        )
+    return (
+        "drop",
+        f"low confidence {confidence:.2f} below uncertain_min {uncertain_min:.2f}",
+    )
 
 
 @dataclass

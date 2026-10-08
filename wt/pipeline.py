@@ -9,10 +9,13 @@ from pathlib import Path
 import yaml
 
 from wt.alert import deliver, usable_channels
-from wt.decider import Decider, build_decider
+from wt.decider import Decider, DeciderError, build_decider
 from wt.embed import Embedder, build_embedder, cosine
+from wt.events import confirm_same_event, same_event_signals
+from wt.extract import enrich_item
+from wt.guard import classify_text
 from wt.indicators import load_indicators
-from wt.models import CycleReport, Indicator, Item, MatchResult
+from wt.models import CycleReport, Decision, Indicator, Item, MatchResult
 from wt.normalize import (
     INGEST_COSINE,
     INGEST_HAMMING,
@@ -22,10 +25,11 @@ from wt.normalize import (
 )
 from wt.policy import decide_action, parse_duration, suppressed_by_cooldown
 from wt.prefilter import select_candidates
-from wt.safety import injection_suspected
+from wt.safety import excerpts, strip_hidden
 from wt.settings import Settings
+from wt.spam import filter_spam
 from wt.store import Store
-from wt.text import sha256_text, utcnow
+from wt.text import clean_text, sha256_text, utcnow
 
 log = logging.getLogger("wt.pipeline")
 
@@ -98,7 +102,10 @@ def run_items(
         fallback=settings.decider_fallback,
     )
     index_indicators(store, embedder, indicators)
-    fresh, duplicates = _dedupe(store, embedder, items)
+    visible = [_visible_item(item) for item in items]
+    visible, spam_dropped = filter_spam(visible, min_cluster=settings.spam_min_cluster)
+    fresh, duplicates = _dedupe(store, embedder, visible)
+    _assign_events(store, decider, fresh)
     results: list[MatchResult] = []
     for item, vector in fresh:
         cosines = {
@@ -108,30 +115,47 @@ def run_items(
         candidates = select_candidates(item, indicators, cosines, top_k=settings.top_k)
         if not candidates:
             continue
-        decisions = decider.decide_many(item, candidates)
-        suspicious = injection_suspected(item.document())
+        enriched = enrich_item(item, enabled=settings.fetch_fulltext)
+        if enriched.text != item.text:
+            store.update_item_text(item.id, enriched.text)
+            item = enriched
+        verdict = classify_text(item.document(), mode=settings.injection_guard)
+        decisions = {} if verdict.flagged else decider.decide_many(item, candidates)
         for cand in candidates:
-            decision = decisions.get(cand.indicator.id)
-            if decision is None:
-                continue
-            action, reason = decide_action(
-                cand.indicator,
-                p_hit=decision.p_hit,
-                severity=decision.severity,
-                cosine_value=cand.cosine,
-                confidence=decision.confidence,
-            )
-            if (
-                action == "push"
-                and suspicious
-                and cand.cosine < cand.indicator.prefilter.min_cosine
-            ):
-                action = "digest"
-                reason = "injection suspected and cosine below min_cosine"
+            if verdict.flagged:
+                decision = Decision(
+                    p_hit=0.0,
+                    severity=0.0,
+                    confidence=0.0,
+                    backend="guard",
+                    answers={},
+                )
+                action, reason = (
+                    "digest",
+                    f"injection flagged ({verdict.backend}): {verdict.reason}",
+                )
+            else:
+                decision = decisions.get(cand.indicator.id)
+                if decision is None:
+                    continue
+                action, reason = decide_action(
+                    cand.indicator,
+                    p_hit=decision.p_hit,
+                    severity=decision.severity,
+                    cosine_value=cand.cosine,
+                    confidence=decision.confidence,
+                )
+                decision, action, reason = maybe_escalate(
+                    settings, item, cand, decision, action, reason
+                )
+            event_id = item.event_id or item.id
             match_id = sha256_text(f"{item.id}:{cand.indicator.id}")[:16]
             if action == "push" and store.has_push(match_id):
                 action = "suppressed"
                 reason = "already alerted"
+            elif action == "push" and store.event_has_push(event_id, cand.indicator.id):
+                action = "suppressed"
+                reason = "same event already alerted"
             elif action == "push":
                 cooldown = parse_duration(cand.indicator.policy.cooldown)
                 priors = store.recent_push_priors(
@@ -147,6 +171,8 @@ def run_items(
                 ):
                     action = "suppressed"
                     reason = "cooldown: near-duplicate of a recent alert"
+            snippets = excerpts(item.document(), cand.matched_terms)
+            explanation = _explanation(item, cand, decision, event_id)
             result = MatchResult(
                 match_id=match_id,
                 item_id=item.id,
@@ -162,6 +188,10 @@ def run_items(
                 action=action,  # type: ignore[arg-type]
                 reason=reason,
                 backend=decision.backend,
+                matched_terms=list(cand.matched_terms),
+                snippets=snippets,
+                explanation=explanation,
+                event_id=event_id,
             )
             store.save_match(result, decision.answers)
             if action == "push":
@@ -190,11 +220,92 @@ def run_items(
         items_seen=len(items),
         items_new=len(fresh),
         duplicates=duplicates,
+        spam_dropped=spam_dropped,
         results=results,
         backend=",".join(backends),
         embedder=embedder.name,
         vector_backend=store.vector_backend,
     )
+
+
+def _visible_item(item: Item) -> Item:
+    title = clean_text(strip_hidden(item.title))
+    text = clean_text(strip_hidden(item.text))
+    if title == item.title and text == item.text:
+        return item
+    return item.model_copy(update={"title": title or item.title, "text": text})
+
+
+def _explanation(item: Item, cand, decision: Decision, event_id: str) -> str:
+    terms = ", ".join(cand.matched_terms) if cand.matched_terms else "none"
+    return (
+        f"indicator={cand.indicator.name} ({cand.indicator.id}); "
+        f"keywords={terms}; cosine={cand.cosine:.3f}; "
+        f"p_hit={decision.p_hit:.3f}; severity={decision.severity:.3f}; "
+        f"confidence={decision.confidence:.3f}; backend={decision.backend}; "
+        f"event={event_id}"
+    )
+
+
+def maybe_escalate(settings, item, cand, decision, action, reason):
+    """Re-score an uncertain push with the optional local escalation backend."""
+    if action != "digest" or not reason.startswith("uncertain"):
+        return decision, action, reason
+    kind = (settings.escalate or "").strip().lower()
+    if kind not in {"ollama", "systemone"}:
+        return decision, action, reason
+    try:
+        escalator = build_decider(
+            kind,
+            decider_url=settings.decider_url,
+            decider_model=settings.decider_model,
+            api_key=settings.decider_api_key,
+            ollama_url=settings.ollama_url,
+            ollama_model=settings.ollama_model,
+            fallback=False,
+        )
+        upgraded = escalator.decide_many(item, [cand]).get(cand.indicator.id)
+    except (DeciderError, ValueError) as exc:
+        log.warning("escalation failed (%s)", exc)
+        return decision, action, reason
+    if upgraded is None:
+        return decision, action, reason
+    new_action, new_reason = decide_action(
+        cand.indicator,
+        p_hit=upgraded.p_hit,
+        severity=upgraded.severity,
+        cosine_value=cand.cosine,
+        confidence=upgraded.confidence,
+    )
+    if new_action != "push":
+        return decision, action, reason
+    upgraded.backend = f"escalated:{upgraded.backend}"
+    return upgraded, "push", f"escalated: {new_reason}"
+
+
+def _assign_events(store: Store, decider: Decider, fresh: list[tuple[Item, list[float]]]) -> None:
+    from wt.normalize import simhash as simhash_of
+
+    for item, vector in fresh:
+        event_id = item.id
+        own_sim = simhash_of(item.document())
+        for prior in store.recent_fingerprints():
+            if prior["id"] == item.id or not prior["vector"]:
+                continue
+            if not same_event_signals(
+                title=item.title,
+                other_title=prior["title"],
+                simhash_value=own_sim,
+                other_simhash=prior["simhash"],
+                vector=vector,
+                other_vector=prior["vector"],
+            ):
+                continue
+            if confirm_same_event(decider, item, prior["title"], prior["text"]):
+                event_id = prior["event_id"] or prior["id"]
+                break
+        item.event_id = event_id
+        store.set_event_id(item.id, event_id)
 
 
 def _dedupe(

@@ -1,0 +1,2514 @@
+# Feed names and URLs mined from World Monitor (AGPL-3.0).
+# This file is data. It does not contain World Monitor source code.
+# Leave worldmonitor.enabled false in config/sources.yaml unless you
+# intend to poll this whole catalog.
+note: 'Names and URLs mined from World Monitor''s public feed inventory (koala73/worldmonitor,
+  AGPL-3.0). Data only: no World Monitor code. Watch Tower does not fetch these unless
+  worldmonitor.enabled is true.'
+source: https://github.com/koala73/worldmonitor/blob/main/server/worldmonitor/news/v1/_feeds.ts
+feeds:
+- id: wm-full-politics-bbc-world
+  name: BBC World
+  variant: full
+  category: politics
+  url: https://feeds.bbci.co.uk/news/world/rss.xml
+- id: wm-full-politics-guardian-world
+  name: Guardian World
+  variant: full
+  category: politics
+  url: https://www.theguardian.com/world/rss
+- id: wm-full-politics-ap-news
+  name: AP News
+  variant: full
+  category: politics
+  url: https://news.google.com/rss/search?q=site%3Aapnews.com%20when%3A1d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-politics-reuters-world
+  name: Reuters World
+  variant: full
+  category: politics
+  url: https://news.google.com/rss/search?q=site%3Areuters.com%20world%20when%3A1d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-politics-cnn-world
+  name: CNN World
+  variant: full
+  category: politics
+  url: https://news.google.com/rss/search?q=site%3Acnn.com%20world%20news%20when%3A1d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-politics-trump-truth-social
+  name: Trump - Truth Social
+  variant: full
+  category: politics
+  url: https://trumpstruth.org/feed
+- id: wm-full-us-reuters-us
+  name: Reuters US
+  variant: full
+  category: us
+  url: https://news.google.com/rss/search?q=site%3Areuters.com%20US%20when%3A1d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-us-npr-news
+  name: NPR News
+  variant: full
+  category: us
+  url: https://feeds.npr.org/1001/rss.xml
+- id: wm-full-us-pbs-newshour
+  name: PBS NewsHour
+  variant: full
+  category: us
+  url: https://www.pbs.org/newshour/feeds/rss/headlines
+- id: wm-full-us-abc-news
+  name: ABC News
+  variant: full
+  category: us
+  url: https://feeds.abcnews.com/abcnews/topstories
+- id: wm-full-us-cbs-news
+  name: CBS News
+  variant: full
+  category: us
+  url: https://www.cbsnews.com/latest/rss/main
+- id: wm-full-us-nbc-news
+  name: NBC News
+  variant: full
+  category: us
+  url: https://feeds.nbcnews.com/nbcnews/public/news
+- id: wm-full-us-wall-street-journal
+  name: Wall Street Journal
+  variant: full
+  category: us
+  url: https://feeds.content.dowjones.io/public/rss/RSSUSnews
+- id: wm-full-us-politico
+  name: Politico
+  variant: full
+  category: us
+  url: https://rss.politico.com/politics-news.xml
+- id: wm-full-us-the-hill
+  name: The Hill
+  variant: full
+  category: us
+  url: https://thehill.com/news/feed
+- id: wm-full-us-axios
+  name: Axios
+  variant: full
+  category: us
+  url: https://api.axios.com/feed/
+- id: wm-full-us-fox-news
+  name: Fox News
+  variant: full
+  category: us
+  url: https://moxie.foxnews.com/google-publisher/us.xml
+- id: wm-full-us-cbc-news
+  name: CBC News
+  variant: full
+  category: us
+  url: https://www.cbc.ca/webfeed/rss/rss-world
+- id: wm-full-us-globe-and-mail
+  name: Globe and Mail
+  variant: full
+  category: us
+  url: https://www.theglobeandmail.com/arc/outboundfeeds/rss/category/canada/?outputType=xml
+- id: wm-full-us-global-news
+  name: Global News
+  variant: full
+  category: us
+  url: https://globalnews.ca/feed/
+- id: wm-full-us-toronto-star
+  name: Toronto Star
+  variant: full
+  category: us
+  url: https://www.thestar.com/search/?f=rss&t=article&c=news/canada
+- id: wm-full-us-national-post
+  name: National Post
+  variant: full
+  category: us
+  url: https://nationalpost.com/feed/
+- id: wm-full-us-financial-post
+  name: Financial Post
+  variant: full
+  category: us
+  url: https://financialpost.com/feed/
+- id: wm-full-us-ipolitics
+  name: iPolitics
+  variant: full
+  category: us
+  url: https://www.ipolitics.ca/feed
+- id: wm-full-us-the-narwhal
+  name: The Narwhal
+  variant: full
+  category: us
+  url: https://thenarwhal.ca/feed/
+- id: wm-full-us-the-tyee
+  name: The Tyee
+  variant: full
+  category: us
+  url: https://thetyee.ca/rss2.xml
+- id: wm-full-us-radio-canada
+  name: Radio-Canada
+  variant: full
+  category: us
+  url: https://ici.radio-canada.ca/info/rss/info/en-continu
+  lang: fr
+- id: wm-full-us-la-presse
+  name: La Presse
+  variant: full
+  category: us
+  url: https://www.lapresse.ca/actualites/rss
+  lang: fr
+- id: wm-full-us-le-devoir
+  name: Le Devoir
+  variant: full
+  category: us
+  url: https://www.ledevoir.com/rss/manchettes.xml
+  lang: fr
+- id: wm-full-us-tva-nouvelles
+  name: TVA Nouvelles
+  variant: full
+  category: us
+  url: https://www.tvanouvelles.ca/rss.xml
+  lang: fr
+- id: wm-full-us-vancouver-sun
+  name: Vancouver Sun
+  variant: full
+  category: us
+  url: https://vancouversun.com/feed/
+- id: wm-full-us-calgary-herald
+  name: Calgary Herald
+  variant: full
+  category: us
+  url: https://calgaryherald.com/feed/
+- id: wm-full-us-winnipeg-free-press
+  name: Winnipeg Free Press
+  variant: full
+  category: us
+  url: https://www.winnipegfreepress.com/feed
+- id: wm-full-us-ottawa-citizen
+  name: Ottawa Citizen
+  variant: full
+  category: us
+  url: https://ottawacitizen.com/feed/
+- id: wm-full-us-edmonton-journal
+  name: Edmonton Journal
+  variant: full
+  category: us
+  url: https://edmontonjournal.com/feed/
+- id: wm-full-us-the-province
+  name: The Province
+  variant: full
+  category: us
+  url: https://theprovince.com/feed/
+- id: wm-full-us-ctv-news
+  name: CTV News
+  variant: full
+  category: us
+  url: https://news.google.com/rss/search?q=site%3Actvnews.ca%20when%3A1d&hl=en-CA&gl=CA&ceid=CA:en
+- id: wm-full-us-cp24
+  name: CP24
+  variant: full
+  category: us
+  url: https://news.google.com/rss/search?q=site%3Acp24.com%20when%3A1d&hl=en-CA&gl=CA&ceid=CA:en
+- id: wm-full-us-montreal-gazette
+  name: Montreal Gazette
+  variant: full
+  category: us
+  url: https://news.google.com/rss/search?q=site%3Amontrealgazette.com%20when%3A1d&hl=en-CA&gl=CA&ceid=CA:en
+- id: wm-full-europe-france-24
+  name: France 24
+  variant: full
+  category: europe
+  url: https://www.france24.com/en/rss
+- id: wm-full-europe-euronews
+  name: EuroNews
+  variant: full
+  category: europe
+  url: https://www.euronews.com/rss?format=xml
+- id: wm-full-europe-le-monde
+  name: Le Monde
+  variant: full
+  category: europe
+  url: https://www.lemonde.fr/en/rss/une.xml
+- id: wm-full-europe-dw-news
+  name: DW News
+  variant: full
+  category: europe
+  url: https://rss.dw.com/xml/rss-en-all
+- id: wm-full-europe-telegraph
+  name: Telegraph
+  variant: full
+  category: europe
+  url: https://www.telegraph.co.uk/rss.xml
+- id: wm-full-europe-interfax-en
+  name: Interfax EN
+  variant: full
+  category: europe
+  url: https://news.google.com/rss/search?q=site%3Ainterfax.com%20when%3A7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-europe-tagesschau
+  name: Tagesschau
+  variant: full
+  category: europe
+  url: https://www.tagesschau.de/xml/rss2/
+  lang: de
+- id: wm-full-europe-handelsblatt
+  name: Handelsblatt
+  variant: full
+  category: europe
+  url: https://www.handelsblatt.com/contentexport/feed/schlagzeilen
+  lang: de
+- id: wm-full-europe-welt
+  name: Welt
+  variant: full
+  category: europe
+  url: https://www.welt.de/feeds/latest.rss
+  lang: de
+- id: wm-full-europe-interfax-ru
+  name: Interfax RU
+  variant: full
+  category: europe
+  url: https://www.interfax.ru/rss.asp
+  lang: ru
+- id: wm-full-europe-ansa
+  name: ANSA
+  variant: full
+  category: europe
+  url: https://www.ansa.it/sito/ansait_rss.xml
+  lang: it
+- id: wm-full-europe-nos-nieuws
+  name: NOS Nieuws
+  variant: full
+  category: europe
+  url: https://feeds.nos.nl/nosnieuwsalgemeen
+  lang: nl
+- id: wm-full-europe-svt-nyheter
+  name: SVT Nyheter
+  variant: full
+  category: europe
+  url: https://www.svt.se/nyheter/rss.xml
+  lang: sv
+- id: wm-full-europe-yle-news
+  name: Yle News
+  variant: full
+  category: europe
+  url: https://yle.fi/rss/news
+- id: wm-full-europe-nrk
+  name: NRK
+  variant: full
+  category: europe
+  url: https://www.nrk.no/nyheter/siste.rss
+- id: wm-full-europe-aftenposten
+  name: Aftenposten
+  variant: full
+  category: europe
+  url: https://www.aftenposten.no/rss
+- id: wm-full-europe-dr-nyheder
+  name: DR Nyheder
+  variant: full
+  category: europe
+  url: https://www.dr.dk/nyheder/service/feeds/allenyheder
+- id: wm-full-europe-arctic-today
+  name: Arctic Today
+  variant: full
+  category: europe
+  url: https://news.google.com/rss/search?q=site%3Aarctictoday.com%20when%3A14d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-europe-telex
+  name: Telex
+  variant: full
+  category: europe
+  url: https://telex.hu/rss
+  lang: hu
+- id: wm-full-europe-index-hu
+  name: Index.hu
+  variant: full
+  category: europe
+  url: https://index.hu/24ora/rss
+  lang: hu
+- id: wm-full-europe-hvg
+  name: HVG
+  variant: full
+  category: europe
+  url: https://hvg.hu/rss
+  lang: hu
+- id: wm-full-europe-444-hu
+  name: 444.hu
+  variant: full
+  category: europe
+  url: https://444.hu/feed
+  lang: hu
+- id: wm-full-europe-24-hu
+  name: 24.hu
+  variant: full
+  category: europe
+  url: https://24.hu/feed/
+  lang: hu
+- id: wm-full-europe-h-rad
+  name: Híradó
+  variant: full
+  category: europe
+  url: https://news.google.com/rss/search?q=site%3Ahirado.hu%20when%3A2d&hl=hu&gl=HU&ceid=HU:hu
+  lang: hu
+- id: wm-full-europe-portfolio-hu
+  name: Portfolio.hu
+  variant: full
+  category: europe
+  url: https://portfolio.hu/rss/all.xml
+  lang: hu
+- id: wm-full-europe-atv
+  name: ATV
+  variant: full
+  category: europe
+  url: https://www.atv.hu/rss
+  lang: hu
+- id: wm-full-europe-seznam-zpr-vy
+  name: Seznam Zprávy
+  variant: full
+  category: europe
+  url: https://www.seznamzpravy.cz/rss
+  lang: cs
+- id: wm-full-europe-n1-croatia
+  name: N1 Croatia
+  variant: full
+  category: europe
+  url: https://n1info.hr/feed/
+  lang: hr
+- id: wm-full-europe-index-hr
+  name: Index.hr
+  variant: full
+  category: europe
+  url: https://www.index.hr/rss
+  lang: hr
+- id: wm-full-europe-jutarnji-list
+  name: Jutarnji list
+  variant: full
+  category: europe
+  url: https://www.jutarnji.hr/feed
+  lang: hr
+- id: wm-full-europe-balkan-insight
+  name: Balkan Insight
+  variant: full
+  category: europe
+  url: https://balkaninsight.com/feed/
+- id: wm-full-europe-digi24
+  name: Digi24
+  variant: full
+  category: europe
+  url: https://www.digi24.ro/rss
+  lang: ro
+- id: wm-full-europe-hotnews
+  name: HotNews
+  variant: full
+  category: europe
+  url: https://www.hotnews.ro/rss
+  lang: ro
+- id: wm-full-europe-g4media
+  name: G4Media
+  variant: full
+  category: europe
+  url: https://www.g4media.ro/feed/
+  lang: ro
+- id: wm-full-europe-dnevnik
+  name: Dnevnik
+  variant: full
+  category: europe
+  url: https://www.dnevnik.bg/rss/
+  lang: bg
+- id: wm-full-europe-kyiv-independent
+  name: Kyiv Independent
+  variant: full
+  category: europe
+  url: https://news.google.com/rss/search?q=site%3Akyivindependent.com%20when%3A3d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-europe-ukrinform
+  name: Ukrinform
+  variant: full
+  category: europe
+  url: https://news.google.com/rss/search?q=site%3Aukrinform.net%20when%3A3d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-europe-suspilne
+  name: Suspilne
+  variant: full
+  category: europe
+  url: https://news.google.com/rss/search?q=site%3Asuspilne.media%20when%3A2d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-europe-ukrainska-pravda-en
+  name: Ukrainska Pravda EN
+  variant: full
+  category: europe
+  url: https://news.google.com/rss/search?q=site%3Aeuromaidanpress.com%20when%3A2d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-europe-nv-en
+  name: NV EN
+  variant: full
+  category: europe
+  url: https://news.google.com/rss/search?q=site%3Aenglish.nv.ua%20when%3A2d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-europe-hromadske-en
+  name: Hromadske EN
+  variant: full
+  category: europe
+  url: https://news.google.com/rss/search?q=site%3Ahromadske.ua%20when%3A3d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-europe-ukrainska-pravda
+  name: Ukrainska Pravda
+  variant: full
+  category: europe
+  url: https://news.google.com/rss/search?q=site%3Apravda.com.ua%20when%3A2d&hl=uk&gl=UA&ceid=UA:uk
+  lang: uk
+- id: wm-full-europe-hromadske
+  name: Hromadske
+  variant: full
+  category: europe
+  url: https://news.google.com/rss/search?q=site%3Ahromadske.ua%20when%3A3d&hl=uk&gl=UA&ceid=UA:uk
+  lang: uk
+- id: wm-full-europe-bihus-info
+  name: Bihus.Info
+  variant: full
+  category: europe
+  url: https://news.google.com/rss/search?q=site%3Abihus.info%20when%3A7d&hl=uk&gl=UA&ceid=UA:uk
+  lang: uk
+- id: wm-full-europe-slidstvo-info
+  name: Slidstvo.Info
+  variant: full
+  category: europe
+  url: https://news.google.com/rss/search?q=site%3Aslidstvo.info%20when%3A7d&hl=uk&gl=UA&ceid=UA:uk
+  lang: uk
+- id: wm-full-europe-zn-ua
+  name: ZN.UA
+  variant: full
+  category: europe
+  url: https://news.google.com/rss/search?q=site%3Azn.ua%20when%3A3d&hl=uk&gl=UA&ceid=UA:uk
+  lang: uk
+- id: wm-full-europe-tvn24
+  name: TVN24
+  variant: full
+  category: europe
+  url: https://tvn24.pl/swiat.xml
+- id: wm-full-europe-rzeczpospolita
+  name: Rzeczpospolita
+  variant: full
+  category: europe
+  url: https://www.rp.pl/rss_main
+- id: wm-full-europe-meduza
+  name: Meduza
+  variant: full
+  category: europe
+  url: https://meduza.io/rss/en/all
+- id: wm-full-europe-moscow-times
+  name: Moscow Times
+  variant: full
+  category: europe
+  url: https://www.themoscowtimes.com/rss/news
+- id: wm-full-europe-civil-ge
+  name: Civil.ge
+  variant: full
+  category: europe
+  url: https://civil.ge/feed/
+- id: wm-full-europe-oc-media
+  name: OC Media
+  variant: full
+  category: europe
+  url: https://oc-media.org/feed/
+- id: wm-full-europe-jamnews
+  name: JAMnews
+  variant: full
+  category: europe
+  url: https://jam-news.net/feed/
+- id: wm-full-europe-azertag
+  name: Azertag
+  variant: full
+  category: europe
+  url: https://news.google.com/rss/search?q=site%3Aazertag.az%20when%3A3d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-europe-armenpress
+  name: Armenpress
+  variant: full
+  category: europe
+  url: https://news.google.com/rss/search?q=site%3Aarmenpress.am%20when%3A3d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-europe-zerkalo
+  name: Zerkalo
+  variant: full
+  category: europe
+  url: https://news.google.com/rss/search?q=site%3Azerkalo.io%20when%3A2d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-europe-newsmaker
+  name: NewsMaker
+  variant: full
+  category: europe
+  url: https://newsmaker.md/feed
+  lang: ru
+- id: wm-full-europe-ziarul-de-gard
+  name: Ziarul de Gardă
+  variant: full
+  category: europe
+  url: https://www.zdg.md/feed/
+  lang: ro
+- id: wm-full-europe-err-news
+  name: ERR News
+  variant: full
+  category: europe
+  url: https://news.err.ee/rss
+- id: wm-full-europe-lrt-english
+  name: LRT English
+  variant: full
+  category: europe
+  url: https://www.lrt.lt/en/news-in-english?rss
+- id: wm-full-europe-lsm-english
+  name: LSM English
+  variant: full
+  category: europe
+  url: https://eng.lsm.lv/rss/
+- id: wm-full-europe-daily-sabah
+  name: Daily Sabah
+  variant: full
+  category: europe
+  url: https://www.dailysabah.com/rss/home-page
+- id: wm-full-europe-hurriyet
+  name: Hurriyet
+  variant: full
+  category: europe
+  url: https://www.hurriyet.com.tr/rss/anasayfa
+  lang: tr
+- id: wm-full-europe-polsat-news
+  name: Polsat News
+  variant: full
+  category: europe
+  url: https://www.polsatnews.pl/rss/wszystkie.xml
+  lang: pl
+- id: wm-full-europe-pap
+  name: PAP
+  variant: full
+  category: europe
+  url: https://news.google.com/rss/search?q=site%3Apap.pl%20when%3A2d&hl=pl&gl=PL&ceid=PL:pl
+  lang: pl
+- id: wm-full-europe-gazeta-wyborcza
+  name: Gazeta Wyborcza
+  variant: full
+  category: europe
+  url: https://news.google.com/rss/search?q=site%3Awyborcza.pl%20when%3A2d&hl=pl&gl=PL&ceid=PL:pl
+  lang: pl
+- id: wm-full-europe-polityka
+  name: Polityka
+  variant: full
+  category: europe
+  url: https://news.google.com/rss/search?q=site%3Apolityka.pl%20when%3A2d&hl=pl&gl=PL&ceid=PL:pl
+  lang: pl
+- id: wm-full-europe-onet
+  name: Onet
+  variant: full
+  category: europe
+  url: https://news.google.com/rss/search?q=site%3Awiadomosci.onet.pl%20when%3A2d&hl=pl&gl=PL&ceid=PL:pl
+  lang: pl
+- id: wm-full-europe-oko-press
+  name: OKO.press
+  variant: full
+  category: europe
+  url: https://oko.press/feed
+  lang: pl
+- id: wm-full-europe-tvp-info
+  name: TVP Info
+  variant: full
+  category: europe
+  url: https://news.google.com/rss/search?q=site%3Atvp.info%20when%3A2d&hl=pl&gl=PL&ceid=PL:pl
+  lang: pl
+- id: wm-full-europe-kathimerini
+  name: Kathimerini
+  variant: full
+  category: europe
+  url: https://news.google.com/rss/search?q=site%3Akathimerini.gr%20when%3A2d&hl=el&gl=GR&ceid=GR:el
+  lang: el
+- id: wm-full-europe-naftemporiki
+  name: Naftemporiki
+  variant: full
+  category: europe
+  url: https://www.naftemporiki.gr/feed/
+  lang: el
+- id: wm-full-europe-in-gr
+  name: in.gr
+  variant: full
+  category: europe
+  url: https://www.in.gr/feed/
+  lang: el
+- id: wm-full-europe-iefimerida
+  name: iefimerida
+  variant: full
+  category: europe
+  url: https://www.iefimerida.gr/rss.xml
+  lang: el
+- id: wm-full-europe-proto-thema
+  name: Proto Thema
+  variant: full
+  category: europe
+  url: https://news.google.com/rss/search?q=site%3Aprotothema.gr%20when%3A2d&hl=el&gl=GR&ceid=GR:el
+  lang: el
+- id: wm-full-europe-ert
+  name: ERT
+  variant: full
+  category: europe
+  url: https://news.google.com/rss/search?q=site%3Aert.gr%20when%3A2d&hl=el&gl=GR&ceid=GR:el
+  lang: el
+- id: wm-full-europe-amna
+  name: AMNA
+  variant: full
+  category: europe
+  url: https://news.google.com/rss/search?q=site%3Aamna.gr%20when%3A2d&hl=el&gl=GR&ceid=GR:el
+  lang: el
+- id: wm-full-europe-ta-nea
+  name: Ta Nea
+  variant: full
+  category: europe
+  url: https://www.tanea.gr/feed/
+  lang: el
+- id: wm-full-europe-liberal-gr
+  name: Liberal GR
+  variant: full
+  category: europe
+  url: https://news.google.com/rss/search?q=site%3Aliberal.gr%20when%3A2d&hl=el&gl=GR&ceid=GR:el
+  lang: el
+- id: wm-full-europe-cnn-greece
+  name: CNN Greece
+  variant: full
+  category: europe
+  url: https://news.google.com/rss/search?q=site%3Acnn.gr%20when%3A2d&hl=el&gl=GR&ceid=GR:el
+  lang: el
+- id: wm-full-middleeast-bbc-middle-east
+  name: BBC Middle East
+  variant: full
+  category: middleeast
+  url: https://feeds.bbci.co.uk/news/world/middle_east/rss.xml
+- id: wm-full-middleeast-al-jazeera
+  name: Al Jazeera
+  variant: full
+  category: middleeast
+  url: https://www.aljazeera.com/xml/rss/all.xml
+- id: wm-full-middleeast-al-arabiya
+  name: Al Arabiya
+  variant: full
+  category: middleeast
+  url: https://news.google.com/rss/search?q=site%3Aenglish.alarabiya.net%20when%3A2d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-middleeast-guardian-me
+  name: Guardian ME
+  variant: full
+  category: middleeast
+  url: https://www.theguardian.com/world/middleeast/rss
+- id: wm-full-middleeast-bbc-persian
+  name: BBC Persian
+  variant: full
+  category: middleeast
+  url: https://feeds.bbci.co.uk/persian/rss.xml
+  lang: fa
+- id: wm-full-middleeast-iran-international
+  name: Iran International
+  variant: full
+  category: middleeast
+  url: https://news.google.com/rss/search?q=site%3Airanintl.com%20when%3A2d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-middleeast-haaretz
+  name: Haaretz
+  variant: full
+  category: middleeast
+  url: https://news.google.com/rss/search?q=site%3Ahaaretz.com%20when%3A7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-middleeast-jerusalem-post
+  name: Jerusalem Post
+  variant: full
+  category: middleeast
+  url: https://www.jpost.com/rss/rssfeedsheadlines.aspx
+- id: wm-full-middleeast-ynetnews
+  name: Ynetnews
+  variant: full
+  category: middleeast
+  url: https://www.ynetnews.com/Integration/StoryRss3089.xml
+- id: wm-full-middleeast-arab-news
+  name: Arab News
+  variant: full
+  category: middleeast
+  url: https://news.google.com/rss/search?q=site%3Aarabnews.com%20when%3A7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-middleeast-the-national
+  name: The National
+  variant: full
+  category: middleeast
+  url: https://www.thenationalnews.com/arc/outboundfeeds/rss/?outputType=xml
+- id: wm-full-middleeast-oman-observer
+  name: Oman Observer
+  variant: full
+  category: middleeast
+  url: https://www.omanobserver.om/rssFeed/1
+- id: wm-full-middleeast-asharq-business
+  name: Asharq Business
+  variant: full
+  category: middleeast
+  url: https://asharqbusiness.com/rss.xml
+- id: wm-full-middleeast-rudaw
+  name: Rudaw
+  variant: full
+  category: middleeast
+  url: https://news.google.com/rss/search?q=site%3Arudaw.net%20when%3A7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-middleeast-yemen-online
+  name: Yemen Online
+  variant: full
+  category: middleeast
+  url: https://news.google.com/rss/search?q=site%3Ayemenonline.info%20when%3A14d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-middleeast-syria-direct
+  name: Syria Direct
+  variant: full
+  category: middleeast
+  url: https://syriadirect.org/feed/
+- id: wm-full-middleeast-enab-baladi-english
+  name: Enab Baladi English
+  variant: full
+  category: middleeast
+  url: https://news.google.com/rss/search?q=site%3Aenglish.enabbaladi.net%20when%3A14d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-middleeast-972-magazine
+  name: +972 Magazine
+  variant: full
+  category: middleeast
+  url: https://www.972mag.com/feed/
+- id: wm-full-middleeast-wafa-english
+  name: WAFA English
+  variant: full
+  category: middleeast
+  url: https://news.google.com/rss/search?q=site%3Aenglish.wafa.ps%20when%3A7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-middleeast-naharnet-lebanon
+  name: Naharnet Lebanon
+  variant: full
+  category: middleeast
+  url: https://www.naharnet.com/tags/lebanon/en/feed.atom
+- id: wm-full-middleeast-annahar
+  name: Annahar
+  variant: full
+  category: middleeast
+  url: https://news.google.com/rss/search?q=site%3Aannahar.com/lebanon%20when%3A7d&hl=ar&gl=LB&ceid=LB:ar
+  lang: ar
+- id: wm-full-middleeast-libya-herald
+  name: Libya Herald
+  variant: full
+  category: middleeast
+  url: https://libyaherald.com/rss.xml
+- id: wm-full-middleeast-egypt-independent
+  name: Egypt Independent
+  variant: full
+  category: middleeast
+  url: https://www.egyptindependent.com/feed/
+- id: wm-full-middleeast-mada-masr
+  name: Mada Masr
+  variant: full
+  category: middleeast
+  url: https://news.google.com/rss/search?q=site%3Amadamasr.com%20when%3A30d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-tech-hacker-news
+  name: Hacker News
+  variant: full
+  category: tech
+  url: https://hnrss.org/frontpage
+- id: wm-full-tech-ars-technica
+  name: Ars Technica
+  variant: full
+  category: tech
+  url: https://feeds.arstechnica.com/arstechnica/technology-lab
+- id: wm-full-tech-the-verge
+  name: The Verge
+  variant: full
+  category: tech
+  url: https://www.theverge.com/rss/index.xml
+- id: wm-full-tech-mit-tech-review
+  name: MIT Tech Review
+  variant: full
+  category: tech
+  url: https://www.technologyreview.com/feed/
+- id: wm-full-tech-wired
+  name: Wired
+  variant: full
+  category: tech
+  url: https://www.wired.com/feed/rss
+- id: wm-full-ai-ai-news
+  name: AI News
+  variant: full
+  category: ai
+  url: https://news.google.com/rss/search?q=%28OpenAI%20OR%20Anthropic%20OR%20Google%20AI%20OR%20%22large%20language%20model%22%20OR%20ChatGPT%29%20when%3A2d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-ai-venturebeat-ai
+  name: VentureBeat AI
+  variant: full
+  category: ai
+  url: https://venturebeat.com/category/ai/feed/
+- id: wm-full-ai-the-verge-ai
+  name: The Verge AI
+  variant: full
+  category: ai
+  url: https://www.theverge.com/rss/ai-artificial-intelligence/index.xml
+- id: wm-full-ai-mit-tech-review
+  name: MIT Tech Review
+  variant: full
+  category: ai
+  url: https://www.technologyreview.com/topic/artificial-intelligence/feed
+- id: wm-full-ai-arxiv-ai
+  name: ArXiv AI
+  variant: full
+  category: ai
+  url: https://export.arxiv.org/rss/cs.AI
+- id: wm-full-finance-cnbc
+  name: CNBC
+  variant: full
+  category: finance
+  url: https://www.cnbc.com/id/100003114/device/rss/rss.html
+- id: wm-full-finance-marketwatch
+  name: MarketWatch
+  variant: full
+  category: finance
+  url: https://news.google.com/rss/search?q=site%3Amarketwatch.com%20markets%20when%3A1d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-finance-yahoo-finance
+  name: Yahoo Finance
+  variant: full
+  category: finance
+  url: https://finance.yahoo.com/news/rssindex
+- id: wm-full-finance-financial-times
+  name: Financial Times
+  variant: full
+  category: finance
+  url: https://www.ft.com/rss/home
+- id: wm-full-finance-reuters-business
+  name: Reuters Business
+  variant: full
+  category: finance
+  url: https://news.google.com/rss/search?q=site%3Areuters.com%20business%20markets%20when%3A1d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-finance-fox-business
+  name: Fox Business
+  variant: full
+  category: finance
+  url: https://moxie.foxbusiness.com/google-publisher/latest.xml
+- id: wm-full-finance-business-insider
+  name: Business Insider
+  variant: full
+  category: finance
+  url: https://www.businessinsider.com/rss
+- id: wm-full-finance-globenewswire
+  name: GlobeNewswire
+  variant: full
+  category: finance
+  url: https://www.globenewswire.com/RssFeed/subjectcode/22/feedTitle/GlobeNewswire
+- id: wm-full-finance-business-wire
+  name: Business Wire
+  variant: full
+  category: finance
+  url: https://feed.businesswire.com/rss/home/?rss=G1QFDERJXkJeGVtRWA==
+- id: wm-full-finance-pr-newswire
+  name: PR Newswire
+  variant: full
+  category: finance
+  url: https://news.google.com/rss/search?q=site%3Aprnewswire.com%20when%3A1d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-finance-chainwire
+  name: Chainwire
+  variant: full
+  category: finance
+  url: https://chainwire.org/feed/
+- id: wm-full-finance-coinbase-blog
+  name: Coinbase Blog
+  variant: full
+  category: finance
+  url: https://news.google.com/rss/search?q=site%3Acoinbase.com/blog%20when%3A7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-finance-binance-announcements
+  name: Binance Announcements
+  variant: full
+  category: finance
+  url: https://news.google.com/rss/search?q=site%3Abinance.com/en/support/announcement%20when%3A3d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-finance-jin10
+  name: Jin10
+  variant: full
+  category: finance
+  url: https://news.google.com/rss/search?q=site%3Ajin10.com%20when%3A1d&hl=zh-CN&gl=CN&ceid=CN:zh-Hans
+  lang: zh
+- id: wm-full-commodities-oil-gas
+  name: Oil & Gas
+  variant: full
+  category: commodities
+  url: https://news.google.com/rss/search?q=%28oil%20price%20OR%20OPEC%20OR%20%22natural%20gas%22%20OR%20pipeline%20OR%20LNG%29%20when%3A2d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-commodities-gold-metals
+  name: Gold & Metals
+  variant: full
+  category: commodities
+  url: https://news.google.com/rss/search?q=%28%22gold%20price%22%20OR%20%22silver%20price%22%20OR%20%22precious%20metals%22%20OR%20%22copper%20price%22%29%20when%3A2d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-gov-white-house
+  name: White House
+  variant: full
+  category: gov
+  url: https://www.whitehouse.gov/briefings-statements/feed/
+- id: wm-full-gov-white-house-actions
+  name: White House Actions
+  variant: full
+  category: gov
+  url: https://www.whitehouse.gov/presidential-actions/feed/
+- id: wm-full-gov-state-dept
+  name: State Dept
+  variant: full
+  category: gov
+  url: https://news.google.com/rss/search?q=%28site%3Astate.gov%20OR%20%22State%20Department%22%29%20when%3A1d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-gov-pentagon
+  name: Pentagon
+  variant: full
+  category: gov
+  url: https://www.war.gov/DesktopModules/ArticleCS/RSS.ashx?ContentType=1&Site=945
+- id: wm-full-gov-federal-reserve
+  name: Federal Reserve
+  variant: full
+  category: gov
+  url: https://www.federalreserve.gov/feeds/press_all.xml
+- id: wm-full-gov-sec
+  name: SEC
+  variant: full
+  category: gov
+  url: https://www.sec.gov/news/pressreleases.rss
+- id: wm-full-gov-u-s-trade-representative
+  name: U.S. Trade Representative
+  variant: full
+  category: gov
+  url: https://ustr.gov/rss.xml
+- id: wm-full-gov-un-news
+  name: UN News
+  variant: full
+  category: gov
+  url: https://news.un.org/feed/subscribe/en/news/all/rss.xml
+- id: wm-full-gov-cisa
+  name: CISA
+  variant: full
+  category: gov
+  url: https://www.cisa.gov/cybersecurity-advisories/all.xml
+- id: wm-full-gov-treasury
+  name: Treasury
+  variant: full
+  category: gov
+  url: https://news.google.com/rss/search?q=site%3Atreasury.gov%20when%3A1d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-gov-doj
+  name: DOJ
+  variant: full
+  category: gov
+  url: https://news.google.com/rss/search?q=site%3Ajustice.gov%20when%3A1d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-africa-bbc-africa
+  name: BBC Africa
+  variant: full
+  category: africa
+  url: https://feeds.bbci.co.uk/news/world/africa/rss.xml
+- id: wm-full-africa-guardian-africa
+  name: Guardian Africa
+  variant: full
+  category: africa
+  url: https://www.theguardian.com/world/africa/rss
+- id: wm-full-africa-france-24-africa
+  name: France 24 Africa
+  variant: full
+  category: africa
+  url: https://www.france24.com/en/africa/rss
+- id: wm-full-africa-africa-news
+  name: Africa News
+  variant: full
+  category: africa
+  url: https://news.google.com/rss/search?q=%28Africa%20OR%20Nigeria%20OR%20Kenya%20OR%20%22South%20Africa%22%20OR%20Ethiopia%29%20when%3A2d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-africa-sahel-crisis
+  name: Sahel Crisis
+  variant: full
+  category: africa
+  url: https://news.google.com/rss/search?q=%28Sahel%20OR%20Mali%20OR%20Niger%20OR%20%22Burkina%20Faso%22%20OR%20Wagner%29%20when%3A3d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-africa-news24
+  name: News24
+  variant: full
+  category: africa
+  url: https://feeds.news24.com/articles/news24/TopStories/rss
+- id: wm-full-africa-africanews
+  name: Africanews
+  variant: full
+  category: africa
+  url: https://www.africanews.com/feed/
+- id: wm-full-africa-jeune-afrique
+  name: Jeune Afrique
+  variant: full
+  category: africa
+  url: https://www.jeuneafrique.com/feed/
+  lang: fr
+- id: wm-full-africa-premium-times
+  name: Premium Times
+  variant: full
+  category: africa
+  url: https://www.premiumtimesng.com/feed
+- id: wm-full-africa-vanguard-nigeria
+  name: Vanguard Nigeria
+  variant: full
+  category: africa
+  url: https://www.vanguardngr.com/feed/
+- id: wm-full-africa-channels-tv
+  name: Channels TV
+  variant: full
+  category: africa
+  url: https://www.channelstv.com/feed/
+- id: wm-full-africa-daily-trust
+  name: Daily Trust
+  variant: full
+  category: africa
+  url: https://dailytrust.com/feed/
+- id: wm-full-africa-thisday
+  name: ThisDay
+  variant: full
+  category: africa
+  url: https://www.thisdaylive.com/feed
+- id: wm-full-africa-radio-tamazuj
+  name: Radio Tamazuj
+  variant: full
+  category: africa
+  url: https://www.radiotamazuj.org/en/feed
+- id: wm-full-africa-the-reporter-ethiopia
+  name: The Reporter Ethiopia
+  variant: full
+  category: africa
+  url: https://www.thereporterethiopia.com/feed/
+- id: wm-full-africa-ethiopia-insight
+  name: Ethiopia Insight
+  variant: full
+  category: africa
+  url: https://www.ethiopia-insight.com/feed/
+- id: wm-full-africa-dabanga-sudan
+  name: Dabanga Sudan
+  variant: full
+  category: africa
+  url: https://www.dabangasudan.org/en/feed
+- id: wm-full-africa-hiiraan-online
+  name: Hiiraan Online
+  variant: full
+  category: africa
+  url: https://news.google.com/rss/search?q=site%3Ahiiraan.com%20when%3A7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-africa-actualite-cd
+  name: Actualite.cd
+  variant: full
+  category: africa
+  url: https://actualite.cd/feed
+  lang: fr
+- id: wm-full-africa-radio-okapi
+  name: Radio Okapi
+  variant: full
+  category: africa
+  url: https://www.radiookapi.net/rss.xml
+  lang: fr
+- id: wm-full-africa-myjoyonline
+  name: MyJoyOnline
+  variant: full
+  category: africa
+  url: https://www.myjoyonline.com/feed/
+- id: wm-full-africa-citi-newsroom
+  name: Citi Newsroom
+  variant: full
+  category: africa
+  url: https://news.google.com/rss/search?q=site%3Acitinewsroom.com%20when%3A7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-africa-le-quotidien
+  name: Le Quotidien
+  variant: full
+  category: africa
+  url: https://lequotidien.sn/feed/
+  lang: fr
+- id: wm-full-africa-rfi-afrique
+  name: RFI Afrique
+  variant: full
+  category: africa
+  url: https://www.rfi.fr/en/africa/rss
+- id: wm-full-africa-studio-tamani
+  name: Studio Tamani
+  variant: full
+  category: africa
+  url: https://www.studiotamani.org/feed/
+  lang: fr
+- id: wm-full-africa-lefaso-net
+  name: leFaso.net
+  variant: full
+  category: africa
+  url: https://lefaso.net/spip.php?page=backend
+  lang: fr
+- id: wm-full-africa-actuniger
+  name: ActuNiger
+  variant: full
+  category: africa
+  url: https://news.google.com/rss/search?q=site%3Aactuniger.com%20Niger%20when%3A7d&hl=fr&gl=FR&ceid=FR:fr
+  lang: fr
+- id: wm-full-africa-a-r-info
+  name: Aïr Info
+  variant: full
+  category: africa
+  url: https://airinfoagadez.com/feed/
+  lang: fr
+- id: wm-full-africa-daily-nation
+  name: Daily Nation
+  variant: full
+  category: africa
+  url: https://nation.africa/kenya/rss.xml
+- id: wm-full-africa-the-guardian-post
+  name: The Guardian Post
+  variant: full
+  category: africa
+  url: https://news.google.com/rss/search?q=site%3Atheguardianpostcameroon.com%20when%3A30d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-africa-tchadinfos
+  name: Tchadinfos
+  variant: full
+  category: africa
+  url: https://tchadinfos.com/feed/
+  lang: fr
+- id: wm-full-africa-alwihda-info
+  name: Alwihda Info
+  variant: full
+  category: africa
+  url: https://www.alwihdainfo.com/rss/
+  lang: fr
+- id: wm-full-africa-radio-ndeke-luka
+  name: Radio Ndeke Luka
+  variant: full
+  category: africa
+  url: https://www.radiondekeluka.org/feed/
+  lang: fr
+- id: wm-full-latam-bbc-latin-america
+  name: BBC Latin America
+  variant: full
+  category: latam
+  url: https://feeds.bbci.co.uk/news/world/latin_america/rss.xml
+- id: wm-full-latam-guardian-americas
+  name: Guardian Americas
+  variant: full
+  category: latam
+  url: https://www.theguardian.com/world/americas/rss
+- id: wm-full-latam-guardian-caribbean
+  name: Guardian Caribbean
+  variant: full
+  category: latam
+  url: https://www.theguardian.com/world/caribbean/rss
+- id: wm-full-latam-france-24-latam
+  name: France 24 LatAm
+  variant: full
+  category: latam
+  url: https://www.france24.com/en/americas/rss
+- id: wm-full-latam-mexico-news-daily
+  name: Mexico News Daily
+  variant: full
+  category: latam
+  url: https://mexiconewsdaily.com/feed/
+- id: wm-full-latam-primicias
+  name: Primicias
+  variant: full
+  category: latam
+  url: https://www.primicias.ec/feed/
+  lang: es
+- id: wm-full-latam-infobae-americas
+  name: Infobae Americas
+  variant: full
+  category: latam
+  url: https://www.infobae.com/arc/outboundfeeds/rss/
+  lang: es
+- id: wm-full-latam-el-universo
+  name: El Universo
+  variant: full
+  category: latam
+  url: https://www.eluniverso.com/arc/outboundfeeds/rss/category/noticias/?outputType=xml
+  lang: es
+- id: wm-full-latam-clar-n
+  name: Clarín
+  variant: full
+  category: latam
+  url: https://www.clarin.com/rss/lo-ultimo/
+  lang: es
+- id: wm-full-latam-insight-crime
+  name: InSight Crime
+  variant: full
+  category: latam
+  url: https://insightcrime.org/feed/
+- id: wm-full-latam-haitilibre-english
+  name: HaitiLibre English
+  variant: full
+  category: latam
+  url: https://www.haitilibre.com/rss-flash-en.php
+- id: wm-full-latam-ayibopost
+  name: AyiboPost
+  variant: full
+  category: latam
+  url: https://news.google.com/rss/search?q=site%3Aayibopost.com%20Haiti%20when%3A14d&hl=fr&gl=FR&ceid=FR:fr
+  lang: fr
+- id: wm-full-latam-caracas-chronicles
+  name: Caracas Chronicles
+  variant: full
+  category: latam
+  url: https://www.caracaschronicles.com/feed/
+- id: wm-full-latam-efecto-cocuyo
+  name: Efecto Cocuyo
+  variant: full
+  category: latam
+  url: https://efectococuyo.com/feed/
+  lang: es
+- id: wm-full-latam-havana-times
+  name: Havana Times
+  variant: full
+  category: latam
+  url: https://havanatimes.org/feed/
+- id: wm-full-latam-14ymedio
+  name: 14ymedio
+  variant: full
+  category: latam
+  url: https://www.14ymedio.com/rss/
+  lang: es
+- id: wm-full-asia-bbc-asia
+  name: BBC Asia
+  variant: full
+  category: asia
+  url: https://feeds.bbci.co.uk/news/world/asia/rss.xml
+- id: wm-full-asia-guardian-pacific
+  name: Guardian Pacific
+  variant: full
+  category: asia
+  url: https://www.theguardian.com/world/pacific-islands/rss
+- id: wm-full-asia-france-24-asia-pacific
+  name: France 24 Asia Pacific
+  variant: full
+  category: asia
+  url: https://www.france24.com/en/asia-pacific/rss
+- id: wm-full-asia-the-diplomat
+  name: The Diplomat
+  variant: full
+  category: asia
+  url: https://thediplomat.com/feed/
+- id: wm-full-asia-reuters-asia
+  name: Reuters Asia
+  variant: full
+  category: asia
+  url: https://news.google.com/rss/search?q=site%3Areuters.com%20%28China%20OR%20Japan%20OR%20Taiwan%20OR%20Korea%29%20when%3A3d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-asia-reuters-india
+  name: Reuters India
+  variant: full
+  category: asia
+  url: https://news.google.com/rss/search?q=site%3Areuters.com%20India%20when%3A3d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-asia-japan-today
+  name: Japan Today
+  variant: full
+  category: asia
+  url: https://japantoday.com/feed/atom
+- id: wm-full-asia-nikkei-asia
+  name: Nikkei Asia
+  variant: full
+  category: asia
+  url: https://news.google.com/rss/search?q=site%3Aasia.nikkei.com%20when%3A3d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-asia-cna
+  name: CNA
+  variant: full
+  category: asia
+  url: https://www.channelnewsasia.com/api/v1/rss-outbound-feed?_format=xml
+- id: wm-full-asia-ndtv
+  name: NDTV
+  variant: full
+  category: asia
+  url: https://feeds.feedburner.com/ndtvnews-top-stories
+- id: wm-full-asia-south-china-morning-post
+  name: South China Morning Post
+  variant: full
+  category: asia
+  url: https://news.google.com/rss/search?q=site%3Ascmp.com%20when%3A2d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-asia-the-hindu
+  name: The Hindu
+  variant: full
+  category: asia
+  url: https://www.thehindu.com/feeder/default.rss
+- id: wm-full-asia-asia-news
+  name: Asia News
+  variant: full
+  category: asia
+  url: https://news.google.com/rss/search?q=site%3Aasianews.it%20when%3A3d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-asia-xinhua
+  name: Xinhua
+  variant: full
+  category: asia
+  url: https://news.google.com/rss/search?q=site%3Axinhuanet.com%20OR%20Xinhua%20when%3A1d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-asia-asahi-shimbun
+  name: Asahi Shimbun
+  variant: full
+  category: asia
+  url: https://www.asahi.com/rss/asahi/newsheadlines.rdf
+  lang: ja
+- id: wm-full-asia-miit-china
+  name: MIIT (China)
+  variant: full
+  category: asia
+  url: https://api.worldmonitor.app/api/miit-news
+  lang: zh
+- id: wm-full-asia-mofcom-china
+  name: MOFCOM (China)
+  variant: full
+  category: asia
+  url: https://news.google.com/rss/search?q=site%3Amofcom.gov.cn%20when%3A7d&hl=zh-CN&gl=CN&ceid=CN:zh-Hans
+  lang: zh
+- id: wm-full-asia-bangkok-post
+  name: Bangkok Post
+  variant: full
+  category: asia
+  url: https://news.google.com/rss/search?q=site%3Abangkokpost.com%20when%3A1d&hl=en-US&gl=US&ceid=US:en
+  lang: th
+- id: wm-full-asia-vnexpress
+  name: VnExpress
+  variant: full
+  category: asia
+  url: https://vnexpress.net/rss/tin-moi-nhat.rss
+  lang: vi
+- id: wm-full-asia-yonhap-news
+  name: Yonhap News
+  variant: full
+  category: asia
+  url: https://www.yonhapnewstv.co.kr/browse/feed/
+  lang: ko
+- id: wm-full-asia-bbc-hindi
+  name: BBC Hindi
+  variant: full
+  category: asia
+  url: https://feeds.bbci.co.uk/hindi/rss.xml
+  lang: hi
+- id: wm-full-asia-aaj-tak
+  name: Aaj Tak
+  variant: full
+  category: asia
+  url: https://www.aajtak.in/rssfeeds/?id=home
+  lang: hi
+- id: wm-full-asia-ndtv-india
+  name: NDTV India
+  variant: full
+  category: asia
+  url: https://feeds.feedburner.com/ndtvkhabar-latest
+  lang: hi
+- id: wm-full-asia-amar-ujala
+  name: Amar Ujala
+  variant: full
+  category: asia
+  url: https://www.amarujala.com/rss/national.xml
+  lang: hi
+- id: wm-full-asia-eurasianet
+  name: Eurasianet
+  variant: full
+  category: asia
+  url: https://eurasianet.org/rss
+- id: wm-full-asia-rfe-rl-central-asia
+  name: RFE/RL Central Asia
+  variant: full
+  category: asia
+  url: https://news.google.com/rss/search?q=site%3Arferl.org%20Central%2BAsia%20when%3A3d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-asia-the-astana-times
+  name: The Astana Times
+  variant: full
+  category: asia
+  url: https://astanatimes.com/feed/
+- id: wm-full-asia-the-times-of-central-asia
+  name: The Times of Central Asia
+  variant: full
+  category: asia
+  url: https://timesca.com/feed/
+- id: wm-full-asia-focus-taiwan
+  name: Focus Taiwan
+  variant: full
+  category: asia
+  url: https://news.google.com/rss/search?q=site%3Afocustaiwan.tw%20when%3A3d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-asia-taipei-times
+  name: Taipei Times
+  variant: full
+  category: asia
+  url: https://news.google.com/rss/search?q=site%3Ataipeitimes.com%20when%3A3d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-asia-taiwan-news
+  name: Taiwan News
+  variant: full
+  category: asia
+  url: https://news.google.com/rss/search?q=site%3Ataiwannews.com.tw%20when%3A3d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-asia-dawn
+  name: Dawn
+  variant: full
+  category: asia
+  url: https://www.dawn.com/feeds/home/
+- id: wm-full-asia-geo-news
+  name: Geo News
+  variant: full
+  category: asia
+  url: https://news.google.com/rss/search?q=site%3Ageo.tv%20when%3A2d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-asia-jakarta-post
+  name: Jakarta Post
+  variant: full
+  category: asia
+  url: https://news.google.com/rss/search?q=site%3Athejakartapost.com%20when%3A3d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-asia-rappler
+  name: Rappler
+  variant: full
+  category: asia
+  url: https://www.rappler.com/feed/
+- id: wm-full-asia-the-star-malaysia
+  name: The Star (Malaysia)
+  variant: full
+  category: asia
+  url: https://news.google.com/rss/search?q=site%3Athestar.com.my%20when%3A3d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-asia-irrawaddy
+  name: Irrawaddy
+  variant: full
+  category: asia
+  url: https://www.irrawaddy.com/feed/
+- id: wm-full-asia-island-times-palau
+  name: Island Times (Palau)
+  variant: full
+  category: asia
+  url: https://islandtimes.org/feed/
+- id: wm-full-asia-amu-tv
+  name: Amu TV
+  variant: full
+  category: asia
+  url: https://amu.tv/feed/
+- id: wm-full-asia-pajhwok-afghan-news
+  name: Pajhwok Afghan News
+  variant: full
+  category: asia
+  url: https://news.google.com/rss/search?q=site%3Apajhwok.com%20Afghanistan%20when%3A7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-asia-the-daily-star
+  name: The Daily Star
+  variant: full
+  category: asia
+  url: https://news.google.com/rss/search?q=site%3Athedailystar.net%20when%3A14d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-asia-dhaka-tribune
+  name: Dhaka Tribune
+  variant: full
+  category: asia
+  url: https://news.google.com/rss/search?q=site%3Adhakatribune.com%20when%3A14d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-asia-times-of-india
+  name: Times of India
+  variant: full
+  category: asia
+  url: https://timesofindia.indiatimes.com/rssfeeds/-2128936835.cms
+  lang: en
+- id: wm-full-energy-oil-gas
+  name: Oil & Gas
+  variant: full
+  category: energy
+  url: https://news.google.com/rss/search?q=%28oil%20price%20OR%20OPEC%20OR%20%22natural%20gas%22%20OR%20pipeline%20OR%20LNG%29%20when%3A2d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-energy-reuters-energy
+  name: Reuters Energy
+  variant: full
+  category: energy
+  url: https://news.google.com/rss/search?q=site%3Areuters.com%20energy%20when%3A2d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-energy-nuclear-energy
+  name: Nuclear Energy
+  variant: full
+  category: energy
+  url: https://news.google.com/rss/search?q=%28%22nuclear%20energy%22%20OR%20%22nuclear%20power%22%20OR%20%22nuclear%20reactor%22%29%20when%3A3d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-thinktanks-foreign-policy
+  name: Foreign Policy
+  variant: full
+  category: thinktanks
+  url: https://foreignpolicy.com/feed/
+- id: wm-full-thinktanks-atlantic-council
+  name: Atlantic Council
+  variant: full
+  category: thinktanks
+  url: https://www.atlanticcouncil.org/feed/
+- id: wm-full-thinktanks-foreign-affairs
+  name: Foreign Affairs
+  variant: full
+  category: thinktanks
+  url: https://www.foreignaffairs.com/rss.xml
+- id: wm-full-thinktanks-war-on-the-rocks
+  name: War on the Rocks
+  variant: full
+  category: thinktanks
+  url: https://warontherocks.com/feed/
+- id: wm-full-thinktanks-csis
+  name: CSIS
+  variant: full
+  category: thinktanks
+  url: https://www.csis.org/rss.xml
+- id: wm-full-thinktanks-isw
+  name: ISW
+  variant: full
+  category: thinktanks
+  url: https://news.google.com/rss/search?q=site%3Aunderstandingwar.org%20when%3A2d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-crisis-crisiswatch
+  name: CrisisWatch
+  variant: full
+  category: crisis
+  url: https://www.crisisgroup.org/rss
+- id: wm-full-crisis-iaea
+  name: IAEA
+  variant: full
+  category: crisis
+  url: https://www.iaea.org/feeds/topnews
+- id: wm-full-crisis-who
+  name: WHO
+  variant: full
+  category: crisis
+  url: https://www.who.int/rss-feeds/news-english.xml
+- id: wm-full-layoffs-layoffs-fyi
+  name: Layoffs.fyi
+  variant: full
+  category: layoffs
+  url: https://news.google.com/rss/search?q=tech%2Bcompany%2Blayoffs%2Bannounced%20when%3A3d&hl=en-US&gl=US&ceid=US:en
+- id: wm-full-layoffs-techcrunch-layoffs
+  name: TechCrunch Layoffs
+  variant: full
+  category: layoffs
+  url: https://techcrunch.com/tag/layoffs/feed/
+- id: wm-full-layoffs-layoffs-news
+  name: Layoffs News
+  variant: full
+  category: layoffs
+  url: https://news.google.com/rss/search?q=%28layoffs%20OR%20%22job%20cuts%22%20OR%20%22workforce%20reduction%22%29%20when%3A3d&hl=en-US&gl=US&ceid=US:en
+- id: wm-tech-tech-techcrunch
+  name: TechCrunch
+  variant: tech
+  category: tech
+  url: https://techcrunch.com/feed/
+- id: wm-tech-tech-the-verge
+  name: The Verge
+  variant: tech
+  category: tech
+  url: https://www.theverge.com/rss/index.xml
+- id: wm-tech-tech-ars-technica
+  name: Ars Technica
+  variant: tech
+  category: tech
+  url: https://feeds.arstechnica.com/arstechnica/technology-lab
+- id: wm-tech-tech-hacker-news
+  name: Hacker News
+  variant: tech
+  category: tech
+  url: https://hnrss.org/frontpage
+- id: wm-tech-tech-wired
+  name: Wired
+  variant: tech
+  category: tech
+  url: https://www.wired.com/feed/rss
+- id: wm-tech-ai-ai-news
+  name: AI News
+  variant: tech
+  category: ai
+  url: https://news.google.com/rss/search?q=%28OpenAI%20OR%20Anthropic%20OR%20Google%20AI%20OR%20%22large%20language%20model%22%20OR%20ChatGPT%29%20when%3A2d&hl=en-US&gl=US&ceid=US:en
+- id: wm-tech-ai-venturebeat-ai
+  name: VentureBeat AI
+  variant: tech
+  category: ai
+  url: https://venturebeat.com/category/ai/feed/
+- id: wm-tech-ai-the-verge-ai
+  name: The Verge AI
+  variant: tech
+  category: ai
+  url: https://www.theverge.com/rss/ai-artificial-intelligence/index.xml
+- id: wm-tech-ai-arxiv-ai
+  name: ArXiv AI
+  variant: tech
+  category: ai
+  url: https://export.arxiv.org/rss/cs.AI
+- id: wm-tech-startups-techcrunch-startups
+  name: TechCrunch Startups
+  variant: tech
+  category: startups
+  url: https://techcrunch.com/category/startups/feed/
+- id: wm-tech-startups-venturebeat
+  name: VentureBeat
+  variant: tech
+  category: startups
+  url: https://venturebeat.com/feed/
+- id: wm-tech-startups-crunchbase-news
+  name: Crunchbase News
+  variant: tech
+  category: startups
+  url: https://news.crunchbase.com/feed/
+- id: wm-tech-vcblogs-y-combinator-blog
+  name: Y Combinator Blog
+  variant: tech
+  category: vcblogs
+  url: https://www.ycombinator.com/blog/rss/
+- id: wm-tech-vcblogs-a16z-blog
+  name: a16z Blog
+  variant: tech
+  category: vcblogs
+  url: https://www.a16z.news/feed
+- id: wm-tech-vcblogs-first-round-review
+  name: First Round Review
+  variant: tech
+  category: vcblogs
+  url: https://review.firstround.com/articles/rss
+- id: wm-tech-vcblogs-sequoia-blog
+  name: Sequoia Blog
+  variant: tech
+  category: vcblogs
+  url: https://news.google.com/rss/search?q=site%3Asequoiacap.com%20when%3A7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-tech-vcblogs-stratechery
+  name: Stratechery
+  variant: tech
+  category: vcblogs
+  url: https://stratechery.com/feed/
+- id: wm-tech-regionalStartups-eu-startups
+  name: EU Startups
+  variant: tech
+  category: regionalStartups
+  url: https://www.eu-startups.com/feed/
+- id: wm-tech-regionalStartups-tech-eu
+  name: Tech.eu
+  variant: tech
+  category: regionalStartups
+  url: https://tech.eu/feed/
+- id: wm-tech-regionalStartups-sifted-europe
+  name: Sifted (Europe)
+  variant: tech
+  category: regionalStartups
+  url: https://sifted.eu/feed
+- id: wm-tech-regionalStartups-tech-in-asia
+  name: Tech in Asia
+  variant: tech
+  category: regionalStartups
+  url: https://www.techinasia.com/feed
+- id: wm-tech-regionalStartups-techcabal-africa
+  name: TechCabal (Africa)
+  variant: tech
+  category: regionalStartups
+  url: https://techcabal.com/feed/
+- id: wm-tech-regionalStartups-inc42-india
+  name: Inc42 (India)
+  variant: tech
+  category: regionalStartups
+  url: https://inc42.com/feed/
+- id: wm-tech-unicorns-unicorn-news
+  name: Unicorn News
+  variant: tech
+  category: unicorns
+  url: https://news.google.com/rss/search?q=%28%22unicorn%20startup%22%20OR%20%22unicorn%20valuation%22%20OR%20%22%241%20billion%20valuation%22%29%20when%3A7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-tech-unicorns-decacorn-news
+  name: Decacorn News
+  variant: tech
+  category: unicorns
+  url: https://news.google.com/rss/search?q=%28%22decacorn%22%20OR%20%22%2410%20billion%20valuation%22%29%20startup%20when%3A14d&hl=en-US&gl=US&ceid=US:en
+- id: wm-tech-accelerators-yc-news
+  name: YC News
+  variant: tech
+  category: accelerators
+  url: https://news.ycombinator.com/rss
+- id: wm-tech-accelerators-demo-day-news
+  name: Demo Day News
+  variant: tech
+  category: accelerators
+  url: https://news.google.com/rss/search?q=%28%22demo%20day%22%20OR%20%22YC%20batch%22%20OR%20%22accelerator%20batch%22%29%20startup%20when%3A7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-tech-security-krebs-security
+  name: Krebs Security
+  variant: tech
+  category: security
+  url: https://krebsonsecurity.com/feed/
+- id: wm-tech-security-dark-reading
+  name: Dark Reading
+  variant: tech
+  category: security
+  url: https://www.darkreading.com/rss.xml
+- id: wm-tech-policy-politico-tech
+  name: Politico Tech
+  variant: tech
+  category: policy
+  url: https://rss.politico.com/technology.xml
+- id: wm-tech-policy-ai-regulation
+  name: AI Regulation
+  variant: tech
+  category: policy
+  url: https://news.google.com/rss/search?q=AI%20regulation%20OR%20%22artificial%20intelligence%22%20law%20OR%20policy%20when%3A7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-tech-policy-tech-antitrust
+  name: Tech Antitrust
+  variant: tech
+  category: policy
+  url: https://news.google.com/rss/search?q=tech%20antitrust%20OR%20FTC%20Google%20OR%20FTC%20Apple%20OR%20FTC%20Amazon%20when%3A7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-tech-github-github-blog
+  name: GitHub Blog
+  variant: tech
+  category: github
+  url: https://github.blog/feed/
+- id: wm-tech-funding-vc-news
+  name: VC News
+  variant: tech
+  category: funding
+  url: https://news.google.com/rss/search?q=%28%22Series%20A%22%20OR%20%22Series%20B%22%20OR%20%22Series%20C%22%20OR%20%22venture%20capital%22%20OR%20%22funding%20round%22%29%20when%3A2d&hl=en-US&gl=US&ceid=US:en
+- id: wm-tech-cloud-infoq
+  name: InfoQ
+  variant: tech
+  category: cloud
+  url: https://feed.infoq.com/
+- id: wm-tech-cloud-the-new-stack
+  name: The New Stack
+  variant: tech
+  category: cloud
+  url: https://thenewstack.io/feed/
+- id: wm-tech-layoffs-layoffs-fyi
+  name: Layoffs.fyi
+  variant: tech
+  category: layoffs
+  url: https://news.google.com/rss/search?q=tech%2Blayoffs%2Bwhen%3A7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-tech-layoffs-techcrunch-layoffs
+  name: TechCrunch Layoffs
+  variant: tech
+  category: layoffs
+  url: https://techcrunch.com/tag/layoffs/feed/
+- id: wm-tech-finance-cnbc-tech
+  name: CNBC Tech
+  variant: tech
+  category: finance
+  url: https://www.cnbc.com/id/19854910/device/rss/rss.html
+- id: wm-tech-finance-yahoo-finance
+  name: Yahoo Finance
+  variant: tech
+  category: finance
+  url: https://finance.yahoo.com/rss/topstories
+- id: wm-tech-dev-dev-to
+  name: Dev.to
+  variant: tech
+  category: dev
+  url: https://dev.to/feed
+- id: wm-tech-dev-lobsters
+  name: Lobsters
+  variant: tech
+  category: dev
+  url: https://lobste.rs/rss
+- id: wm-tech-dev-changelog
+  name: Changelog
+  variant: tech
+  category: dev
+  url: https://changelog.com/feed
+- id: wm-tech-dev-show-hn
+  name: Show HN
+  variant: tech
+  category: dev
+  url: https://hnrss.org/show
+- id: wm-tech-ipo-ipo-news
+  name: IPO News
+  variant: tech
+  category: ipo
+  url: https://news.google.com/rss/search?q=%28IPO%20OR%20%22initial%20public%20offering%22%20OR%20SPAC%29%20tech%20when%3A7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-tech-ipo-tech-ipo-news
+  name: Tech IPO News
+  variant: tech
+  category: ipo
+  url: https://news.google.com/rss/search?q=tech%20IPO%20OR%20%22tech%20company%22%20IPO%20when%3A7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-tech-producthunt-product-hunt
+  name: Product Hunt
+  variant: tech
+  category: producthunt
+  url: https://www.producthunt.com/feed
+- id: wm-tech-hardware-semianalysis
+  name: SemiAnalysis
+  variant: tech
+  category: hardware
+  url: https://www.semianalysis.com/feed
+- id: wm-tech-hardware-semiconductor-news
+  name: Semiconductor News
+  variant: tech
+  category: hardware
+  url: https://news.google.com/rss/search?q=semiconductor%20OR%20chip%20OR%20TSMC%20OR%20NVIDIA%20OR%20Intel%20when%3A3d&hl=en-US&gl=US&ceid=US:en
+- id: wm-tech-outages-aws-status
+  name: AWS Status
+  variant: tech
+  category: outages
+  url: https://news.google.com/rss/search?q=AWS%20outage%20OR%20%22Amazon%20Web%20Services%22%20down%20when%3A1d&hl=en-US&gl=US&ceid=US:en
+- id: wm-tech-outages-cloud-outages
+  name: Cloud Outages
+  variant: tech
+  category: outages
+  url: https://news.google.com/rss/search?q=%28Azure%20outage%20OR%20%22Google%20Cloud%22%20outage%20OR%20Cloudflare%20outage%20OR%20Slack%20down%20OR%20GitHub%20down%29%20when%3A1d&hl=en-US&gl=US&ceid=US:en
+- id: wm-finance-markets-cnbc
+  name: CNBC
+  variant: finance
+  category: markets
+  url: https://www.cnbc.com/id/100003114/device/rss/rss.html
+- id: wm-finance-markets-yahoo-finance
+  name: Yahoo Finance
+  variant: finance
+  category: markets
+  url: https://finance.yahoo.com/rss/topstories
+- id: wm-finance-markets-seeking-alpha
+  name: Seeking Alpha
+  variant: finance
+  category: markets
+  url: https://seekingalpha.com/market_currents.xml
+- id: wm-finance-markets-fox-business
+  name: Fox Business
+  variant: finance
+  category: markets
+  url: https://moxie.foxbusiness.com/google-publisher/latest.xml
+- id: wm-finance-markets-business-insider
+  name: Business Insider
+  variant: finance
+  category: markets
+  url: https://www.businessinsider.com/rss
+- id: wm-finance-markets-globenewswire
+  name: GlobeNewswire
+  variant: finance
+  category: markets
+  url: https://www.globenewswire.com/RssFeed/subjectcode/22/feedTitle/GlobeNewswire
+- id: wm-finance-markets-business-wire
+  name: Business Wire
+  variant: finance
+  category: markets
+  url: https://feed.businesswire.com/rss/home/?rss=G1QFDERJXkJeGVtRWA==
+- id: wm-finance-markets-pr-newswire
+  name: PR Newswire
+  variant: finance
+  category: markets
+  url: https://news.google.com/rss/search?q=site%3Aprnewswire.com%20when%3A1d&hl=en-US&gl=US&ceid=US:en
+- id: wm-finance-forex-forex-news
+  name: Forex News
+  variant: finance
+  category: forex
+  url: https://news.google.com/rss/search?q=%28forex%20OR%20currency%20OR%20%22exchange%20rate%22%20OR%20FX%20OR%20%22US%20dollar%22%29%20when%3A2d&hl=en-US&gl=US&ceid=US:en
+- id: wm-finance-bonds-bond-market
+  name: Bond Market
+  variant: finance
+  category: bonds
+  url: https://news.google.com/rss/search?q=%28%22bond%20market%22%20OR%20%22treasury%20yield%22%20OR%20%22bond%20yield%22%20OR%20%22fixed%20income%22%29%20when%3A2d&hl=en-US&gl=US&ceid=US:en
+- id: wm-finance-commodities-oil-gas
+  name: Oil & Gas
+  variant: finance
+  category: commodities
+  url: https://news.google.com/rss/search?q=%28oil%20price%20OR%20OPEC%20OR%20%22natural%20gas%22%20OR%20pipeline%20OR%20LNG%29%20when%3A2d&hl=en-US&gl=US&ceid=US:en
+- id: wm-finance-commodities-gold-metals
+  name: Gold & Metals
+  variant: finance
+  category: commodities
+  url: https://news.google.com/rss/search?q=%28%22gold%20price%22%20OR%20%22silver%20price%22%20OR%20%22precious%20metals%22%20OR%20%22copper%20price%22%29%20when%3A2d&hl=en-US&gl=US&ceid=US:en
+- id: wm-finance-crypto-coindesk
+  name: CoinDesk
+  variant: finance
+  category: crypto
+  url: https://www.coindesk.com/arc/outboundfeeds/rss/
+- id: wm-finance-crypto-cointelegraph
+  name: Cointelegraph
+  variant: finance
+  category: crypto
+  url: https://cointelegraph.com/rss
+- id: wm-finance-crypto-the-block
+  name: The Block
+  variant: finance
+  category: crypto
+  url: https://news.google.com/rss/search?q=site:theblock.co+when:1d&hl=en-US&gl=US&ceid=US:en
+- id: wm-finance-crypto-decrypt
+  name: Decrypt
+  variant: finance
+  category: crypto
+  url: https://decrypt.co/feed
+- id: wm-finance-crypto-chainwire
+  name: Chainwire
+  variant: finance
+  category: crypto
+  url: https://chainwire.org/feed/
+- id: wm-finance-crypto-coinbase-blog
+  name: Coinbase Blog
+  variant: finance
+  category: crypto
+  url: https://news.google.com/rss/search?q=site%3Acoinbase.com/blog%20when%3A7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-finance-crypto-binance-announcements
+  name: Binance Announcements
+  variant: finance
+  category: crypto
+  url: https://news.google.com/rss/search?q=site%3Abinance.com/en/support/announcement%20when%3A3d&hl=en-US&gl=US&ceid=US:en
+- id: wm-finance-crypto-jin10
+  name: Jin10
+  variant: finance
+  category: crypto
+  url: https://news.google.com/rss/search?q=site%3Ajin10.com%20when%3A1d&hl=zh-CN&gl=CN&ceid=CN:zh-Hans
+  lang: zh
+- id: wm-finance-crypto-the-defiant
+  name: The Defiant
+  variant: finance
+  category: crypto
+  url: https://thedefiant.io/feed
+- id: wm-finance-crypto-bitcoin-magazine
+  name: Bitcoin Magazine
+  variant: finance
+  category: crypto
+  url: https://bitcoinmagazine.com/feed
+- id: wm-finance-crypto-dl-news
+  name: DL News
+  variant: finance
+  category: crypto
+  url: https://news.google.com/rss/search?q=site:dlnews.com+when:3d&hl=en-US&gl=US&ceid=US:en
+- id: wm-finance-crypto-cryptoslate
+  name: CryptoSlate
+  variant: finance
+  category: crypto
+  url: https://cryptoslate.com/feed/
+- id: wm-finance-crypto-unchained
+  name: Unchained
+  variant: finance
+  category: crypto
+  url: https://unchainedcrypto.com/feed/
+- id: wm-finance-crypto-defi-news
+  name: DeFi News
+  variant: finance
+  category: crypto
+  url: https://news.google.com/rss/search?q=(DeFi+OR+"decentralized+finance")+when:3d&hl=en-US&gl=US&ceid=US:en
+- id: wm-finance-crypto-bloomberg-crypto
+  name: Bloomberg Crypto
+  variant: finance
+  category: crypto
+  url: https://news.google.com/rss/search?q=bloomberg+crypto+when:1d&hl=en-US&gl=US&ceid=US:en
+- id: wm-finance-crypto-reuters-crypto
+  name: Reuters Crypto
+  variant: finance
+  category: crypto
+  url: https://news.google.com/rss/search?q=reuters+crypto+when:1d&hl=en-US&gl=US&ceid=US:en
+- id: wm-finance-crypto-wu-blockchain
+  name: Wu Blockchain
+  variant: finance
+  category: crypto
+  url: https://news.google.com/rss/search?q=site:wublockchain.com+when:7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-finance-crypto-messari
+  name: Messari
+  variant: finance
+  category: crypto
+  url: https://news.google.com/rss/search?q=site:messari.io+when:3d&hl=en-US&gl=US&ceid=US:en
+- id: wm-finance-crypto-nft-news
+  name: NFT News
+  variant: finance
+  category: crypto
+  url: https://news.google.com/rss/search?q=(NFT+OR+"non-fungible")+when:3d&hl=en-US&gl=US&ceid=US:en
+- id: wm-finance-crypto-stablecoin-policy
+  name: Stablecoin Policy
+  variant: finance
+  category: crypto
+  url: https://news.google.com/rss/search?q=(stablecoin+regulation+OR+"stablecoin+bill")+when:7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-finance-centralbanks-federal-reserve
+  name: Federal Reserve
+  variant: finance
+  category: centralbanks
+  url: https://www.federalreserve.gov/feeds/press_all.xml
+- id: wm-finance-centralbanks-pboc-watch
+  name: PBoC Watch
+  variant: finance
+  category: centralbanks
+  url: https://news.google.com/rss/search?q=%28%22People%27s%20Bank%20of%20China%22%20OR%20PBoC%20OR%20PBOC%29%20when%3A7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-finance-economic-economic-data
+  name: Economic Data
+  variant: finance
+  category: economic
+  url: https://news.google.com/rss/search?q=%28CPI%20OR%20inflation%20OR%20GDP%20OR%20%22economic%20data%22%20OR%20%22jobs%20report%22%29%20when%3A2d&hl=en-US&gl=US&ceid=US:en
+- id: wm-finance-ipo-ipo-news
+  name: IPO News
+  variant: finance
+  category: ipo
+  url: https://news.google.com/rss/search?q=%28IPO%20OR%20%22initial%20public%20offering%22%20OR%20%22stock%20market%20debut%22%29%20when%3A2d&hl=en-US&gl=US&ceid=US:en
+- id: wm-finance-derivatives-options-market
+  name: Options Market
+  variant: finance
+  category: derivatives
+  url: https://news.google.com/rss/search?q=%28%22options%20market%22%20OR%20%22options%20trading%22%20OR%20%22put%20call%20ratio%22%20OR%20VIX%29%20when%3A2d&hl=en-US&gl=US&ceid=US:en
+- id: wm-finance-derivatives-futures-trading
+  name: Futures Trading
+  variant: finance
+  category: derivatives
+  url: https://news.google.com/rss/search?q=%28%22futures%20trading%22%20OR%20%22S%26P%20500%20futures%22%20OR%20%22Nasdaq%20futures%22%29%20when%3A1d&hl=en-US&gl=US&ceid=US:en
+- id: wm-finance-fintech-fintech-news
+  name: Fintech News
+  variant: finance
+  category: fintech
+  url: https://news.google.com/rss/search?q=%28fintech%20OR%20%22payment%20technology%22%20OR%20neobank%20OR%20%22digital%20banking%22%29%20when%3A3d&hl=en-US&gl=US&ceid=US:en
+- id: wm-finance-fintech-trading-tech
+  name: Trading Tech
+  variant: finance
+  category: fintech
+  url: https://news.google.com/rss/search?q=%28%22algorithmic%20trading%22%20OR%20%22trading%20platform%22%20OR%20%22quantitative%20finance%22%29%20when%3A7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-finance-fintech-blockchain-finance
+  name: Blockchain Finance
+  variant: finance
+  category: fintech
+  url: https://news.google.com/rss/search?q=%28%22blockchain%20finance%22%20OR%20tokenization%20OR%20%22digital%20securities%22%20OR%20CBDC%29%20when%3A7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-finance-fintech-sec
+  name: SEC
+  variant: finance
+  category: fintech
+  url: https://www.sec.gov/news/pressreleases.rss
+- id: wm-finance-fintech-financial-regulation
+  name: Financial Regulation
+  variant: finance
+  category: fintech
+  url: https://news.google.com/rss/search?q=%28SEC%20OR%20CFTC%20OR%20FINRA%20OR%20FCA%29%20regulation%20OR%20enforcement%20when%3A3d&hl=en-US&gl=US&ceid=US:en
+- id: wm-finance-fintech-banking-rules
+  name: Banking Rules
+  variant: finance
+  category: fintech
+  url: https://news.google.com/rss/search?q=%28Basel%20OR%20%22capital%20requirements%22%20OR%20%22banking%20regulation%22%29%20when%3A7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-finance-fintech-crypto-regulation
+  name: Crypto Regulation
+  variant: finance
+  category: fintech
+  url: https://news.google.com/rss/search?q=%28crypto%20regulation%20OR%20%22digital%20asset%22%20regulation%20OR%20stablecoin%20regulation%29%20when%3A7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-finance-institutional-hedge-fund-news
+  name: Hedge Fund News
+  variant: finance
+  category: institutional
+  url: https://news.google.com/rss/search?q=%28%22hedge%20fund%22%20OR%20Bridgewater%20OR%20Citadel%20OR%20Renaissance%29%20when%3A7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-finance-institutional-private-equity
+  name: Private Equity
+  variant: finance
+  category: institutional
+  url: https://news.google.com/rss/search?q=%28%22private%20equity%22%20OR%20Blackstone%20OR%20KKR%20OR%20Apollo%20OR%20Carlyle%29%20when%3A3d&hl=en-US&gl=US&ceid=US:en
+- id: wm-finance-institutional-sovereign-wealth
+  name: Sovereign Wealth
+  variant: finance
+  category: institutional
+  url: https://news.google.com/rss/search?q=%28%22sovereign%20wealth%20fund%22%20OR%20%22pension%20fund%22%20OR%20%22institutional%20investor%22%29%20when%3A7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-finance-analysis-market-outlook
+  name: Market Outlook
+  variant: finance
+  category: analysis
+  url: https://news.google.com/rss/search?q=%28%22market%20outlook%22%20OR%20%22stock%20market%20forecast%22%20OR%20%22bull%20market%22%20OR%20%22bear%20market%22%29%20when%3A3d&hl=en-US&gl=US&ceid=US:en
+- id: wm-finance-analysis-risk-volatility
+  name: Risk & Volatility
+  variant: finance
+  category: analysis
+  url: https://news.google.com/rss/search?q=%28VIX%20OR%20%22market%20volatility%22%20OR%20%22risk%20off%22%20OR%20%22market%20correction%22%29%20when%3A3d&hl=en-US&gl=US&ceid=US:en
+- id: wm-finance-analysis-bank-research
+  name: Bank Research
+  variant: finance
+  category: analysis
+  url: https://news.google.com/rss/search?q=%28%22Goldman%20Sachs%22%20OR%20JPMorgan%20OR%20%22Morgan%20Stanley%22%29%20forecast%20OR%20outlook%20when%3A3d&hl=en-US&gl=US&ceid=US:en
+- id: wm-finance-gccNews-arabian-business
+  name: Arabian Business
+  variant: finance
+  category: gccNews
+  url: https://news.google.com/rss/search?q=site%3Aarabianbusiness.com%20%28Saudi%20Arabia%20OR%20UAE%20OR%20GCC%29%20when%3A7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-finance-gccNews-the-national
+  name: The National
+  variant: finance
+  category: gccNews
+  url: https://news.google.com/rss/search?q=site%3Athenationalnews.com%20%28Abu%20Dhabi%20OR%20UAE%20OR%20Saudi%29%20when%3A7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-finance-gccNews-arab-news
+  name: Arab News
+  variant: finance
+  category: gccNews
+  url: https://news.google.com/rss/search?q=site%3Aarabnews.com%20%28Saudi%20Arabia%20OR%20investment%20OR%20infrastructure%29%20when%3A7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-finance-gccNews-gulf-fdi
+  name: Gulf FDI
+  variant: finance
+  category: gccNews
+  url: https://news.google.com/rss/search?q=%28PIF%20OR%20%22DP%20World%22%20OR%20Mubadala%20OR%20ADNOC%20OR%20Masdar%20OR%20%22ACWA%20Power%22%29%20infrastructure%20when%3A7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-finance-gccNews-gulf-investments
+  name: Gulf Investments
+  variant: finance
+  category: gccNews
+  url: https://news.google.com/rss/search?q=%28%22Saudi%20Arabia%22%20OR%20UAE%20OR%20%22Abu%20Dhabi%22%29%20investment%20infrastructure%20when%3A7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-finance-gccNews-vision-2030
+  name: Vision 2030
+  variant: finance
+  category: gccNews
+  url: https://news.google.com/rss/search?q=%22Vision%202030%22%20%28project%20OR%20investment%20OR%20announced%29%20when%3A14d&hl=en-US&gl=US&ceid=US:en
+- id: wm-commodity-energy-oilprice-com
+  name: OilPrice.com
+  variant: commodity
+  category: energy
+  url: https://oilprice.com/rss/main
+- id: wm-commodity-energy-rigzone
+  name: Rigzone
+  variant: commodity
+  category: energy
+  url: https://www.rigzone.com/news/rss/rigzone_latest.aspx
+- id: wm-commodity-energy-eia-reports
+  name: EIA Reports
+  variant: commodity
+  category: energy
+  url: https://news.google.com/rss/search?q=site%3Aeia.gov%20energy%20oil%20gas%20when%3A14d&hl=en-US&gl=US&ceid=US:en
+- id: wm-commodity-energy-opec-news
+  name: OPEC News
+  variant: commodity
+  category: energy
+  url: https://news.google.com/rss/search?q=%28OPEC%20OR%20%22oil%20price%22%20OR%20%22crude%20oil%22%20OR%20WTI%20OR%20Brent%20OR%20%22oil%20production%22%29%20when%3A1d&hl=en-US&gl=US&ceid=US:en
+- id: wm-commodity-energy-natural-gas-news
+  name: Natural Gas News
+  variant: commodity
+  category: energy
+  url: https://news.google.com/rss/search?q=%28%22natural%20gas%22%20OR%20LNG%20OR%20%22gas%20price%22%20OR%20%22Henry%20Hub%22%29%20when%3A1d&hl=en-US&gl=US&ceid=US:en
+- id: wm-commodity-energy-energy-intel
+  name: Energy Intel
+  variant: commodity
+  category: energy
+  url: https://news.google.com/rss/search?q=%28energy%20commodities%20OR%20%22energy%20market%22%20OR%20%22energy%20prices%22%29%20when%3A2d&hl=en-US&gl=US&ceid=US:en
+- id: wm-commodity-energy-reuters-energy
+  name: Reuters Energy
+  variant: commodity
+  category: energy
+  url: https://news.google.com/rss/search?q=site%3Areuters.com%20%28oil%20OR%20gas%20OR%20energy%29%20when%3A1d&hl=en-US&gl=US&ceid=US:en
+- id: wm-commodity-energy-mining-journal
+  name: Mining Journal
+  variant: commodity
+  category: energy
+  url: https://news.google.com/rss/search?q=site%3Amining-journal.com%20when%3A7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-commodity-energy-northern-miner
+  name: Northern Miner
+  variant: commodity
+  category: energy
+  url: https://news.google.com/rss/search?q=site%3Anorthernminer.com%20when%3A7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-commodity-energy-mining-weekly
+  name: Mining Weekly
+  variant: commodity
+  category: energy
+  url: https://news.google.com/rss/search?q=site%3Aminingweekly.com%20when%3A7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-commodity-energy-mining-technology
+  name: Mining Technology
+  variant: commodity
+  category: energy
+  url: https://www.mining-technology.com/feed/
+- id: wm-commodity-energy-australian-mining
+  name: Australian Mining
+  variant: commodity
+  category: energy
+  url: https://www.australianmining.com.au/feed/
+- id: wm-commodity-energy-mine-web-snl
+  name: Mine Web (SNL)
+  variant: commodity
+  category: energy
+  url: https://news.google.com/rss/search?q=%28%22mining%20company%22%20OR%20%22mine%20production%22%20OR%20%22mining%20operations%22%29%20when%3A2d&hl=en-US&gl=US&ceid=US:en
+- id: wm-commodity-energy-resource-world
+  name: Resource World
+  variant: commodity
+  category: energy
+  url: https://news.google.com/rss/search?q=%28%22mining%20project%22%20OR%20%22mineral%20exploration%22%20OR%20%22mine%20development%22%29%20when%3A3d&hl=en-US&gl=US&ceid=US:en
+- id: wm-commodity-energy-benchmark-mineral
+  name: Benchmark Mineral
+  variant: commodity
+  category: energy
+  url: https://news.google.com/rss/search?q=%28%22critical%20minerals%22%20OR%20%22battery%20metals%22%20OR%20lithium%20OR%20cobalt%20OR%20%22rare%20earths%22%29%20when%3A2d&hl=en-US&gl=US&ceid=US:en
+- id: wm-commodity-energy-lithium-market
+  name: Lithium Market
+  variant: commodity
+  category: energy
+  url: https://news.google.com/rss/search?q=%28lithium%20price%20OR%20%22lithium%20market%22%20OR%20%22lithium%20supply%22%20OR%20spodumene%20OR%20LCE%29%20when%3A2d&hl=en-US&gl=US&ceid=US:en
+- id: wm-commodity-energy-cobalt-market
+  name: Cobalt Market
+  variant: commodity
+  category: energy
+  url: https://news.google.com/rss/search?q=%28cobalt%20price%20OR%20%22cobalt%20market%22%20OR%20%22DRC%20cobalt%22%20OR%20%22battery%20cobalt%22%29%20when%3A3d&hl=en-US&gl=US&ceid=US:en
+- id: wm-commodity-energy-rare-earths-news
+  name: Rare Earths News
+  variant: commodity
+  category: energy
+  url: https://news.google.com/rss/search?q=%28%22rare%20earth%22%20OR%20%22rare%20earths%22%20OR%20REE%20OR%20neodymium%20OR%20praseodymium%29%20when%3A3d&hl=en-US&gl=US&ceid=US:en
+- id: wm-commodity-energy-ev-battery-supply
+  name: EV Battery Supply
+  variant: commodity
+  category: energy
+  url: https://news.google.com/rss/search?q=%28%22EV%20battery%22%20OR%20%22battery%20supply%20chain%22%20OR%20%22battery%20materials%22%29%20when%3A3d&hl=en-US&gl=US&ceid=US:en
+- id: wm-commodity-energy-iea-critical-minerals
+  name: IEA Critical Minerals
+  variant: commodity
+  category: energy
+  url: https://news.google.com/rss/search?q=site%3Aiea.org%20%28minerals%20OR%20critical%20OR%20battery%29%20when%3A14d&hl=en-US&gl=US&ceid=US:en
+- id: wm-commodity-energy-uranium-market
+  name: Uranium Market
+  variant: commodity
+  category: energy
+  url: https://news.google.com/rss/search?q=%28uranium%20price%20OR%20%22uranium%20market%22%20OR%20U3O8%20OR%20nuclear%20fuel%29%20when%3A3d&hl=en-US&gl=US&ceid=US:en
+- id: wm-commodity-energy-lme-metals
+  name: LME Metals
+  variant: commodity
+  category: energy
+  url: https://news.google.com/rss/search?q=%28LME%20OR%20%22London%20Metal%20Exchange%22%29%20copper%20OR%20aluminum%20OR%20zinc%20OR%20nickel%20when%3A2d&hl=en-US&gl=US&ceid=US:en
+- id: wm-commodity-energy-copper-market
+  name: Copper Market
+  variant: commodity
+  category: energy
+  url: https://news.google.com/rss/search?q=%28copper%20price%20OR%20%22copper%20market%22%20OR%20%22copper%20supply%22%20OR%20COMEX%20copper%29%20when%3A2d&hl=en-US&gl=US&ceid=US:en
+- id: wm-commodity-energy-nickel-news
+  name: Nickel News
+  variant: commodity
+  category: energy
+  url: https://news.google.com/rss/search?q=%28nickel%20price%20OR%20%22nickel%20market%22%20OR%20%22nickel%20supply%22%20OR%20Indonesia%20nickel%29%20when%3A3d&hl=en-US&gl=US&ceid=US:en
+- id: wm-commodity-energy-aluminum-zinc
+  name: Aluminum & Zinc
+  variant: commodity
+  category: energy
+  url: https://news.google.com/rss/search?q=%28aluminum%20price%20OR%20aluminium%20OR%20zinc%20price%20OR%20%22base%20metals%22%29%20when%3A3d&hl=en-US&gl=US&ceid=US:en
+- id: wm-commodity-energy-iron-ore-market
+  name: Iron Ore Market
+  variant: commodity
+  category: energy
+  url: https://news.google.com/rss/search?q=%28%22iron%20ore%22%20price%20OR%20%22iron%20ore%20market%22%20OR%20%22steel%20raw%20materials%22%29%20when%3A2d&hl=en-US&gl=US&ceid=US:en
+- id: wm-commodity-energy-metals-bulletin
+  name: Metals Bulletin
+  variant: commodity
+  category: energy
+  url: https://news.google.com/rss/search?q=%28%22metals%20market%22%20OR%20%22base%20metals%22%20OR%20SHFE%20OR%20%22Shanghai%20Futures%22%29%20when%3A2d&hl=en-US&gl=US&ceid=US:en
+- id: wm-commodity-energy-bhp-news
+  name: BHP News
+  variant: commodity
+  category: energy
+  url: https://news.google.com/rss/search?q=BHP%20%28mining%20OR%20production%20OR%20results%20OR%20copper%20OR%20%22iron%20ore%22%29%20when%3A7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-commodity-energy-rio-tinto-news
+  name: Rio Tinto News
+  variant: commodity
+  category: energy
+  url: https://news.google.com/rss/search?q=%22Rio%20Tinto%22%20%28mining%20OR%20production%20OR%20results%20OR%20Pilbara%29%20when%3A7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-commodity-energy-glencore-vale
+  name: Glencore & Vale
+  variant: commodity
+  category: energy
+  url: https://news.google.com/rss/search?q=%28Glencore%20OR%20Vale%29%20%28mining%20OR%20production%20OR%20cobalt%20OR%20%22iron%20ore%22%29%20when%3A7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-commodity-energy-gold-majors
+  name: Gold Majors
+  variant: commodity
+  category: energy
+  url: https://news.google.com/rss/search?q=%28Newmont%20OR%20Barrick%20OR%20AngloGold%20OR%20Agnico%29%20%28gold%20mine%20OR%20production%20OR%20results%29%20when%3A7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-commodity-energy-freeport-copper-miners
+  name: Freeport & Copper Miners
+  variant: commodity
+  category: energy
+  url: https://news.google.com/rss/search?q=%28Freeport%20McMoRan%20OR%20Southern%20Copper%20OR%20Teck%20OR%20Antofagasta%29%20when%3A7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-commodity-energy-critical-mineral-companies
+  name: Critical Mineral Companies
+  variant: commodity
+  category: energy
+  url: https://news.google.com/rss/search?q=%28Albemarle%20OR%20SQM%20OR%20%22MP%20Materials%22%20OR%20Lynas%20OR%20Cameco%29%20when%3A7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-commodity-energy-shipping-freight
+  name: Shipping & Freight
+  variant: commodity
+  category: energy
+  url: https://news.google.com/rss/search?q=%28%22bulk%20carrier%22%20OR%20%22dry%20bulk%22%20OR%20%22commodity%20shipping%22%20OR%20%22Port%20Hedland%22%20OR%20%22Strait%20of%20Hormuz%22%29%20when%3A3d&hl=en-US&gl=US&ceid=US:en
+- id: wm-commodity-energy-trade-routes
+  name: Trade Routes
+  variant: commodity
+  category: energy
+  url: https://news.google.com/rss/search?q=%28%22trade%20route%22%20OR%20%22supply%20chain%22%20OR%20%22commodity%20export%22%20OR%20%22mineral%20export%22%29%20when%3A3d&hl=en-US&gl=US&ceid=US:en
+- id: wm-commodity-energy-china-commodity-imports
+  name: China Commodity Imports
+  variant: commodity
+  category: energy
+  url: https://news.google.com/rss/search?q=China%20imports%20copper%20OR%20%22iron%20ore%22%20OR%20lithium%20OR%20cobalt%20OR%20%22rare%20earth%22%20when%3A3d&hl=en-US&gl=US&ceid=US:en
+- id: wm-commodity-energy-port-logistics
+  name: Port & Logistics
+  variant: commodity
+  category: energy
+  url: https://news.google.com/rss/search?q=%28%22iron%20ore%20port%22%20OR%20%22copper%20port%22%20OR%20%22commodity%20port%22%20OR%20%22mineral%20logistics%22%29%20when%3A7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-commodity-energy-mining-regulation
+  name: Mining Regulation
+  variant: commodity
+  category: energy
+  url: https://news.google.com/rss/search?q=%28%22mining%20regulation%22%20OR%20%22mining%20policy%22%20OR%20%22mining%20permit%22%20OR%20%22mining%20ban%22%29%20when%3A7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-commodity-energy-esg-in-mining
+  name: ESG in Mining
+  variant: commodity
+  category: energy
+  url: https://news.google.com/rss/search?q=%28%22mining%20ESG%22%20OR%20%22responsible%20mining%22%20OR%20%22mine%20closure%22%20OR%20tailings%29%20when%3A7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-commodity-energy-trade-tariffs
+  name: Trade & Tariffs
+  variant: commodity
+  category: energy
+  url: https://news.google.com/rss/search?q=%28%22mineral%20tariff%22%20OR%20%22metals%20tariff%22%20OR%20%22critical%20mineral%20policy%22%20OR%20%22mining%20export%20ban%22%29%20when%3A7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-commodity-energy-indonesia-nickel-policy
+  name: Indonesia Nickel Policy
+  variant: commodity
+  category: energy
+  url: https://news.google.com/rss/search?q=%28Indonesia%20nickel%20OR%20%22nickel%20export%22%20OR%20%22nickel%20ban%22%20OR%20%22nickel%20processing%22%29%20when%3A7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-commodity-energy-china-mineral-policy
+  name: China Mineral Policy
+  variant: commodity
+  category: energy
+  url: https://news.google.com/rss/search?q=China%20%22rare%20earth%22%20OR%20%22mineral%20export%22%20OR%20%22critical%20mineral%22%20policy%20OR%20restriction%20when%3A7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-commodity-markets-yahoo-finance-commodities
+  name: Yahoo Finance Commodities
+  variant: commodity
+  category: markets
+  url: https://finance.yahoo.com/rss/topstories
+- id: wm-commodity-markets-cnbc-markets
+  name: CNBC Markets
+  variant: commodity
+  category: markets
+  url: https://www.cnbc.com/id/100003114/device/rss/rss.html
+- id: wm-commodity-markets-seeking-alpha-metals
+  name: Seeking Alpha Metals
+  variant: commodity
+  category: markets
+  url: https://news.google.com/rss/search?q=site%3Aseekingalpha.com%20%28gold%20OR%20silver%20OR%20copper%20OR%20mining%29%20when%3A2d&hl=en-US&gl=US&ceid=US:en
+- id: wm-commodity-markets-commodity-futures
+  name: Commodity Futures
+  variant: commodity
+  category: markets
+  url: https://news.google.com/rss/search?q=%28COMEX%20OR%20NYMEX%20OR%20%22commodity%20futures%22%20OR%20CME%20commodities%29%20when%3A2d&hl=en-US&gl=US&ceid=US:en
+- id: wm-commodity-finance-cnbc
+  name: CNBC
+  variant: commodity
+  category: finance
+  url: https://www.cnbc.com/id/100003114/device/rss/rss.html
+- id: wm-commodity-finance-marketwatch
+  name: MarketWatch
+  variant: commodity
+  category: finance
+  url: https://news.google.com/rss/search?q=site%3Amarketwatch.com%20markets%20when%3A1d&hl=en-US&gl=US&ceid=US:en
+- id: wm-commodity-finance-yahoo-finance
+  name: Yahoo Finance
+  variant: commodity
+  category: finance
+  url: https://finance.yahoo.com/news/rssindex
+- id: wm-commodity-finance-financial-times
+  name: Financial Times
+  variant: commodity
+  category: finance
+  url: https://www.ft.com/rss/home
+- id: wm-commodity-finance-reuters-business
+  name: Reuters Business
+  variant: commodity
+  category: finance
+  url: https://news.google.com/rss/search?q=site%3Areuters.com%20business%20markets%20when%3A1d&hl=en-US&gl=US&ceid=US:en
+- id: wm-happy-positive-good-news-network
+  name: Good News Network
+  variant: happy
+  category: positive
+  url: https://www.goodnewsnetwork.org/feed/
+- id: wm-happy-positive-positive-news
+  name: Positive.News
+  variant: happy
+  category: positive
+  url: https://www.positive.news/feed/
+- id: wm-happy-positive-reasons-to-be-cheerful
+  name: Reasons to be Cheerful
+  variant: happy
+  category: positive
+  url: https://reasonstobecheerful.world/feed/
+- id: wm-happy-positive-optimist-daily
+  name: Optimist Daily
+  variant: happy
+  category: positive
+  url: https://www.optimistdaily.com/feed/
+- id: wm-happy-science-sciencedaily
+  name: ScienceDaily
+  variant: happy
+  category: science
+  url: https://www.sciencedaily.com/rss/all.xml
+- id: wm-happy-science-nature-news
+  name: Nature News
+  variant: happy
+  category: science
+  url: https://www.nature.com/nature.rss
+- id: wm-happy-science-singularity-hub
+  name: Singularity Hub
+  variant: happy
+  category: science
+  url: https://singularityhub.com/feed/
+- id: wm-happy-science-human-progress
+  name: Human Progress
+  variant: happy
+  category: science
+  url: https://humanprogress.org/feed/
+- id: wm-happy-nature-mongabay
+  name: Mongabay
+  variant: happy
+  category: nature
+  url: https://news.mongabay.com/feed/
+- id: wm-happy-nature-conservation-optimism
+  name: Conservation Optimism
+  variant: happy
+  category: nature
+  url: https://conservationoptimism.org/feed/
+- id: wm-happy-inspiring-gnn-heroes
+  name: GNN Heroes
+  variant: happy
+  category: inspiring
+  url: https://www.goodnewsnetwork.org/category/news/inspiring/feed/
+- id: wm-happy-inspiring-gnn-health
+  name: GNN Health
+  variant: happy
+  category: inspiring
+  url: https://www.goodnewsnetwork.org/category/news/health/feed/
+- id: wm-happy-community-yes-magazine
+  name: Yes! Magazine
+  variant: happy
+  category: community
+  url: https://www.yesmagazine.org/feed
+- id: wm-happy-community-shareable
+  name: Shareable
+  variant: happy
+  category: community
+  url: https://www.shareable.net/feed/
+- id: wm-happy-community-defense-one
+  name: Defense One
+  variant: happy
+  category: community
+  url: https://www.defenseone.com/rss/all/
+- id: wm-happy-community-the-war-zone
+  name: The War Zone
+  variant: happy
+  category: community
+  url: https://www.twz.com/feed
+- id: wm-happy-community-defense-news
+  name: Defense News
+  variant: happy
+  category: community
+  url: https://www.defensenews.com/arc/outboundfeeds/rss/?outputType=xml
+- id: wm-happy-community-breaking-defense
+  name: Breaking Defense
+  variant: happy
+  category: community
+  url: https://breakingdefense.com/feed/
+- id: wm-happy-community-military-times
+  name: Military Times
+  variant: happy
+  category: community
+  url: https://www.militarytimes.com/arc/outboundfeeds/rss/?outputType=xml
+- id: wm-happy-community-task-purpose
+  name: Task & Purpose
+  variant: happy
+  category: community
+  url: https://taskandpurpose.com/feed/
+- id: wm-happy-community-usni-news
+  name: USNI News
+  variant: happy
+  category: community
+  url: https://news.google.com/rss/search?q=site:news.usni.org+when:3d&hl=en-US&gl=US&ceid=US:en
+- id: wm-happy-community-gcaptain
+  name: gCaptain
+  variant: happy
+  category: community
+  url: https://gcaptain.com/feed/
+- id: wm-happy-community-oryx-osint
+  name: Oryx OSINT
+  variant: happy
+  category: community
+  url: https://www.oryxspioenkop.com/feeds/posts/default?alt=rss
+- id: wm-happy-community-foreign-policy
+  name: Foreign Policy
+  variant: happy
+  category: community
+  url: https://foreignpolicy.com/feed/
+- id: wm-happy-community-foreign-affairs
+  name: Foreign Affairs
+  variant: happy
+  category: community
+  url: https://www.foreignaffairs.com/rss.xml
+- id: wm-happy-community-atlantic-council
+  name: Atlantic Council
+  variant: happy
+  category: community
+  url: https://www.atlanticcouncil.org/feed/
+- id: wm-happy-community-bellingcat
+  name: Bellingcat
+  variant: happy
+  category: community
+  url: https://news.google.com/rss/search?q=site%3Abellingcat.com%20when%3A7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-happy-community-krebs-security
+  name: Krebs Security
+  variant: happy
+  category: community
+  url: https://krebsonsecurity.com/feed/
+- id: wm-happy-community-arms-control-assn
+  name: Arms Control Assn
+  variant: happy
+  category: community
+  url: https://news.google.com/rss/search?q=site%3Aarmscontrol.org%20when%3A7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-happy-community-bulletin-of-atomic-scientists
+  name: Bulletin of Atomic Scientists
+  variant: happy
+  category: community
+  url: https://news.google.com/rss/search?q=site%3Athebulletin.org%20when%3A7d&hl=en-US&gl=US&ceid=US:en
+- id: wm-happy-community-fao-news
+  name: FAO News
+  variant: happy
+  category: community
+  url: https://www.fao.org/feeds/fao-newsroom-rss
+- id: wm-happy-community-occrp
+  name: OCCRP
+  variant: happy
+  category: community
+  url: https://www.occrp.org/en/feed
+- id: wm-happy-community-dfrlab
+  name: DFRLab
+  variant: happy
+  category: community
+  url: https://dfrlab.org/feed/
+- id: wm-happy-community-lighthouse-reports
+  name: Lighthouse Reports
+  variant: happy
+  category: community
+  url: https://www.lighthousereports.com/feed/
+- id: wm-happy-community-the-sentry
+  name: The Sentry
+  variant: happy
+  category: community
+  url: https://thesentry.org/feed/
+- id: wm-happy-community-gitoc
+  name: GITOC
+  variant: happy
+  category: community
+  url: https://globalinitiative.net/feed/
+- id: wm-happy-community-vsquare
+  name: VSquare
+  variant: happy
+  category: community
+  url: https://vsquare.org/feed/
+- id: wm-happy-community-correctiv
+  name: Correctiv
+  variant: happy
+  category: community
+  url: https://correctiv.org/feed/

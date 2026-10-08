@@ -196,7 +196,15 @@ def _cmd_doctor(args) -> int:
     print(f"db: {settings.db_path}")
     print(f"indicators: {settings.indicators_dir}")
     print(f"embedder setting: {settings.embedder} ({settings.embedder_model})")
-    print(f"decider setting: {settings.decider} ({settings.decider_url})")
+    print(f"decider setting: {settings.decider} ({settings.decider_url}, model={settings.decider_model})")
+    print("kev release: 1.0 checkpoints kev-0.8b, kev-4b, kev-9b, kev-27b (pin @v1.0)")
+    print("kev server: python -m kev.serve uses MLX on Apple Silicon; set KEV_DATE_FACTS=1")
+    print("kev size: kev-0.8b@v1.0 on any Apple Silicon Mac; kev-4b@v1.0 wants 32 GB")
+    print("kev strength: 0.8b automates ~14% of new-source decisions at a 5% error budget; 4b and up about 52-69%")
+    print("kev state: title + 300 words (validated context is 8192 tokens)")
+    print(f"escalate: {settings.escalate or 'off'}")
+    print(f"injection guard: {settings.injection_guard}")
+    print(f"full text: {settings.fetch_fulltext}")
     try:
         from wt.indicators import load_indicators
 

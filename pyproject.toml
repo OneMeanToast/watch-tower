@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "watch-tower"
-version = "0.1.0"
+version = "0.2.0"
 description = "Passive watcher: match news and OSINT against YAML indicators and alert on strong hits."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -24,6 +24,7 @@ dependencies = [
 embed = ["sentence-transformers>=3.0"]
 extract = ["trafilatura>=2.0"]
 bluesky = ["websockets>=13"]
+guard = ["transformers>=4.44"]
 dev = ["pytest>=8"]
 
 [project.scripts]

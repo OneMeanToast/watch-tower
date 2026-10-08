@@ -24,6 +24,12 @@ def format_result(result: MatchResult, *, feedback_base: str | None) -> str:
     ]
     if result.category:
         lines.append(f"  kind: {result.category}")
+    if result.explanation:
+        lines.append(f"  match: {result.explanation}")
+    if result.snippets:
+        lines.append("  snippets:")
+        for snippet in result.snippets:
+            lines.append(f"    - {snippet}")
     lines.append(f"  why: {result.reason}")
     lines.append(
         f"  feedback: wt feedback {result.match_id} up | wt feedback {result.match_id} down"

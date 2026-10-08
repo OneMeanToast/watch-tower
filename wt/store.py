@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS items (
   lang TEXT NOT NULL,
   authors TEXT NOT NULL DEFAULT '[]',
   simhash TEXT NOT NULL,
+  event_id TEXT NOT NULL DEFAULT '',
   created_at TEXT NOT NULL
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_items_url_hash
@@ -63,6 +64,8 @@ CREATE TABLE IF NOT EXISTS matches (
   reason TEXT NOT NULL,
   backend TEXT NOT NULL,
   answers_json TEXT NOT NULL DEFAULT '{}',
+  explanation TEXT NOT NULL DEFAULT '',
+  snippets_json TEXT NOT NULL DEFAULT '[]',
   created_at TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS alerts (
@@ -105,6 +108,7 @@ class Store:
             self.conn.execute("PRAGMA journal_mode = WAL")
         self.has_vec, self.vec_version = self._load_vec()
         self.conn.executescript(SCHEMA)
+        self._ensure_columns()
         self.conn.commit()
 
     def _load_vec(self) -> tuple[bool, str]:
@@ -128,6 +132,20 @@ class Store:
         if self.has_vec:
             return f"sqlite-vec {self.vec_version}"
         return "python"
+
+    def _ensure_columns(self) -> None:
+        item_cols = {row[1] for row in self.conn.execute("PRAGMA table_info(items)")}
+        if "event_id" not in item_cols:
+            self.conn.execute("ALTER TABLE items ADD COLUMN event_id TEXT NOT NULL DEFAULT ''")
+        match_cols = {row[1] for row in self.conn.execute("PRAGMA table_info(matches)")}
+        if "explanation" not in match_cols:
+            self.conn.execute(
+                "ALTER TABLE matches ADD COLUMN explanation TEXT NOT NULL DEFAULT ''"
+            )
+        if "snippets_json" not in match_cols:
+            self.conn.execute(
+                "ALTER TABLE matches ADD COLUMN snippets_json TEXT NOT NULL DEFAULT '[]'"
+            )
 
     def close(self) -> None:
         self.conn.close()
@@ -238,14 +256,15 @@ class Store:
             """
             INSERT INTO items (
               id, url, url_hash, content_hash, source, feed_id, ts, title, text,
-              lang, authors, simhash, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              lang, authors, simhash, event_id, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(id) DO UPDATE SET
               title = excluded.title,
               text = excluded.text,
               ts = excluded.ts,
               simhash = excluded.simhash,
-              content_hash = excluded.content_hash
+              content_hash = excluded.content_hash,
+              event_id = excluded.event_id
             """,
             (
                 item.id,
@@ -260,6 +279,7 @@ class Store:
                 item.lang,
                 json.dumps(item.authors),
                 f"{simhash:016x}",
+                item.event_id or "",
                 now,
             ),
         )
@@ -326,8 +346,9 @@ class Store:
             """
             INSERT INTO matches (
               id, item_id, indicator_id, cosine, keyword_hit, p_hit, severity,
-              category, confidence, action, reason, backend, answers_json, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              category, confidence, action, reason, backend, answers_json,
+              explanation, snippets_json, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(id) DO UPDATE SET
               cosine = excluded.cosine,
               keyword_hit = excluded.keyword_hit,
@@ -339,6 +360,8 @@ class Store:
               reason = excluded.reason,
               backend = excluded.backend,
               answers_json = excluded.answers_json,
+              explanation = excluded.explanation,
+              snippets_json = excluded.snippets_json,
               created_at = excluded.created_at
             """,
             (
@@ -355,10 +378,64 @@ class Store:
                 result.reason,
                 result.backend,
                 json.dumps(answers),
+                result.explanation,
+                json.dumps(result.snippets),
                 utcnow().isoformat(),
             ),
         )
         self.conn.commit()
+
+    def set_event_id(self, item_id: str, event_id: str) -> None:
+        self.conn.execute("UPDATE items SET event_id = ? WHERE id = ?", (event_id, item_id))
+        self.conn.commit()
+
+    def update_item_text(self, item_id: str, text: str) -> None:
+        self.conn.execute("UPDATE items SET text = ? WHERE id = ?", (text, item_id))
+        self.conn.commit()
+
+    def event_has_push(self, event_id: str, indicator_id: str) -> bool:
+        if not event_id:
+            return False
+        row = self.conn.execute(
+            """
+            SELECT 1
+            FROM alerts a
+            JOIN matches m ON m.id = a.match_id
+            JOIN items i ON i.id = m.item_id
+            WHERE a.kind = 'push' AND a.indicator_id = ? AND i.event_id = ?
+            LIMIT 1
+            """,
+            (indicator_id, event_id),
+        ).fetchone()
+        return row is not None
+
+    def recent_fingerprints(self, *, limit: int = 400) -> list[dict]:
+        rows = self.conn.execute(
+            """
+            SELECT i.id AS id, i.title AS title, i.text AS text, i.simhash AS simhash,
+                   i.event_id AS event_id, e.vector AS vector
+            FROM items i
+            LEFT JOIN embeddings e
+              ON e.entity_id = i.id AND e.kind = 'item' AND e.label = ''
+            ORDER BY i.ts DESC
+            LIMIT ?
+            """,
+            (limit,),
+        ).fetchall()
+        found = []
+        for row in rows:
+            vector = [] if row["vector"] is None else unpack_f32(row["vector"])
+            found.append(
+                {
+                    "id": str(row["id"]),
+                    "title": str(row["title"]),
+                    "text": str(row["text"]),
+                    "simhash": int(row["simhash"], 16),
+                    "event_id": str(row["event_id"] or row["id"]),
+                    "vector": vector,
+                }
+            )
+        return found
 
     def has_push(self, match_id: str) -> bool:
         row = self.conn.execute(

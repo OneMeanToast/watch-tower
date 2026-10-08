@@ -18,6 +18,7 @@ class Item(BaseModel):
     text: str = ""
     lang: str = "und"
     authors: list[str] = Field(default_factory=list)
+    event_id: str = ""
 
     def document(self) -> str:
         parts = [self.title.strip(), self.text.strip()]
@@ -54,6 +55,10 @@ class PolicyConfig(BaseModel):
     alert_if: str
     digest_if: str | None = None
     cooldown: str = "6h"
+    # 0 disables the band. Example indicators set 0.45 so a confident Kev
+    # answer can push and an uncertain one waits for the digest.
+    push_min_confidence: float = 0.0
+    uncertain_min: float = 0.0
 
 
 class AlertConfig(BaseModel):
@@ -131,12 +136,17 @@ class MatchResult(BaseModel):
     action: Literal["push", "digest", "drop", "suppressed"]
     reason: str
     backend: str
+    matched_terms: list[str] = Field(default_factory=list)
+    snippets: list[str] = Field(default_factory=list)
+    explanation: str = ""
+    event_id: str = ""
 
 
 class CycleReport(BaseModel):
     items_seen: int
     items_new: int
     duplicates: int
+    spam_dropped: int = 0
     results: list[MatchResult] = Field(default_factory=list)
     errors: list[str] = Field(default_factory=list)
     backend: str

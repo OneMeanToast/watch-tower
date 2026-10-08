@@ -31,6 +31,8 @@ class Settings:
     fixtures_path: Path
     decider: str = "auto"
     decider_url: str = "http://127.0.0.1:8009"
+    # Request body model name. Kev's server ignores this and serves the
+    # checkpoint it was started with (`--run jaredpalmer/kev-4b@v1.0`).
     decider_model: str = "kev-latest"
     decider_api_key: str | None = None
     decider_fallback: bool = True
@@ -45,6 +47,12 @@ class Settings:
     feedback_base: str = "http://127.0.0.1:8787"
     labels_path: Path = Path("data/feedback.jsonl")
     echo: bool = True
+    # Empty means no second model. "ollama" or "systemone" re-scores the
+    # uncertain band. Only a confident pass can upgrade a digest to a push.
+    escalate: str = ""
+    injection_guard: str = "heuristic"
+    fetch_fulltext: bool = True
+    spam_min_cluster: int = 3
 
     @classmethod
     def from_env(cls, root: Path | None = None) -> Settings:
@@ -69,6 +77,10 @@ class Settings:
             apprise_urls=_split_urls(os.environ.get("WT_APPRISE_URLS")),
             feedback_base=os.environ.get("WT_FEEDBACK_BASE", "http://127.0.0.1:8787"),
             labels_path=Path(os.environ.get("WT_LABELS", root / "data" / "feedback.jsonl")),
+            escalate=os.environ.get("WT_ESCALATE", "").strip().lower(),
+            injection_guard=os.environ.get("WT_INJECTION_GUARD", "heuristic").strip().lower(),
+            fetch_fulltext=os.environ.get("WT_FETCH_FULLTEXT", "1") not in {"0", "false", "no"},
+            spam_min_cluster=int(os.environ.get("WT_SPAM_MIN_CLUSTER", "3")),
         )
 
     @classmethod
@@ -81,4 +93,7 @@ class Settings:
             base.db_path = root / "data" / "demo.db"
         base.decider = "lexical"
         base.embedder = "hashing"
+        base.escalate = ""
+        base.fetch_fulltext = False
+        base.injection_guard = "heuristic"
         return base

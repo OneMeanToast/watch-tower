@@ -8,6 +8,7 @@ from datetime import datetime
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from wt.models import Item
+from wt.safety import strip_hidden
 from wt.text import clean_text, guess_lang, sha256_text, utcnow
 
 _WS = re.compile(r"\s+")
@@ -76,8 +77,8 @@ def make_item(
     authors: list[str] | None = None,
     lang: str | None = None,
 ) -> Item | None:
-    title_c = clean_text(title)
-    text_c = clean_text(text)
+    title_c = clean_text(strip_hidden(title))
+    text_c = clean_text(strip_hidden(text))
     if not title_c and not text_c:
         return None
     canonical = canonical_url(url)

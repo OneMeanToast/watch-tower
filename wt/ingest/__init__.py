@@ -10,6 +10,7 @@ from wt.ingest.gdelt import fetch_gdelt
 from wt.ingest.mastodon import fetch_mastodon
 from wt.ingest.openalex import fetch_openalex
 from wt.ingest.rss import fetch_rss
+from wt.ingest.worldmonitor import load_catalog
 from wt.ingest.x_paid import XPaidDisabled, fetch_x
 from wt.models import Item
 
@@ -57,6 +58,18 @@ def ingest_all(sources: dict, store) -> tuple[list[Item], list[str]]:
             errors.extend(tag_errors)
         except Exception as exc:
             errors.append(f"mastodon: {exc}")
+
+    worldmonitor_cfg = sources.get("worldmonitor") or {}
+    if worldmonitor_cfg.get("enabled"):
+        try:
+            feeds = load_catalog(worldmonitor_cfg)
+            found, feed_errors = fetch_rss(
+                {"feeds": feeds, "per_feed": int(worldmonitor_cfg.get("per_feed", 5))}
+            )
+            items.extend(found)
+            errors.extend(f"worldmonitor: {err}" for err in feed_errors)
+        except Exception as exc:
+            errors.append(f"worldmonitor: {exc}")
 
     x_cfg = sources.get("x") or {}
     if x_cfg.get("enabled"):

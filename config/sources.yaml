@@ -48,3 +48,11 @@ mastodon:
 # Kept off. wt.ingest.x_paid refuses to run even if this is flipped on.
 x:
   enabled: false
+
+# Names and URLs only, mined from World Monitor. Off so a normal cycle does
+# not poll hundreds of feeds. See config/feeds/worldmonitor.yaml and
+# docs/worldmonitor-ui.md.
+worldmonitor:
+  enabled: false
+  catalog: config/feeds/worldmonitor.yaml
+  per_feed: 5

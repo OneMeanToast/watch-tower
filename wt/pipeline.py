@@ -118,6 +118,7 @@ def run_items(
         enriched = enrich_item(item, enabled=settings.fetch_fulltext)
         if enriched.text != item.text:
             store.update_item_text(item.id, enriched.text)
+            store.record_intake(item.id, kind="extract", method="trafilatura", note=item.url)
             item = enriched
         verdict = classify_text(item.document(), mode=settings.injection_guard)
         decisions = {} if verdict.flagged else decider.decide_many(item, candidates)

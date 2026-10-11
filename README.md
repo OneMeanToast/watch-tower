@@ -48,6 +48,16 @@ That starts the API on `127.0.0.1:8641` and the browser UI on [http://127.0.0.1:
 
 There is no login. A desk is a local view of one database, so two people on one Mac share the wire and keep their own lanes, digest cursor, and export set.
 
+### Catalog
+
+Catalog is the source list the highway was missing. Every feed in `config/sources.yaml` is a row: RSS, arXiv, GDELT, OpenAlex, Bluesky, Mastodon, the World Monitor catalog, and X. A row is **armed** when the next live pull will use it, **off** when it is disabled (Bluesky, Mastodon with no hashtags, World Monitor, and X), **live** after a ping returns, **quiet** when the ping fails, and **seen** when items are already on the wire. Ping sources checks the configured URLs from this machine. It does not turn a disabled source on.
+
+The tether draws a moving line from a source to push, digest, suppressed, or drop only when that source produced a scored item. The published-date bar (24h, 7d, 30d, or a from/to range) filters the highway, the digest, the catalog, and the exports. Sources that have no publish date stay in the catalog and drop out of a dated window.
+
+Manual upload takes a paste or a URL. A URL is read with trafilatura when that extra is installed, otherwise the visible HTML text. Hidden text is stripped first. The result is scored against every indicator and listed under manual upload and extraction, next to any full-text extract the live pull already saved.
+
+Two export pathways sit on top of the older briefing formats. **OPML** is the source list. **Tether** is the packet from sources to decisions for the desk and the date window you have open. Kev JSONL is unchanged and still needs hit and miss labels.
+
 `wt demo` always starts on the hashing embedder and the lexical decider, even if `WT_EMBEDDER` or `WT_DECIDER` are set. Pass `--decider systemone` or `--embedder qwen` only when you want the demo fixtures scored by a local server or the real embedding model.
 
 ## Mac setup (live mode)

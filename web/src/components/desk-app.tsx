@@ -2,11 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { CatalogView } from "@/components/catalog-view";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
-type View = "highway" | "indicators" | "trace" | "digest" | "export" | "desks";
+type View = "highway" | "catalog" | "indicators" | "trace" | "digest" | "export" | "desks";
 
 type Gate = { gate: string; state: string; detail: string };
 
@@ -74,6 +75,7 @@ type Status = {
 
 const VIEWS: { id: View; label: string }[] = [
   { id: "highway", label: "Highway" },
+  { id: "catalog", label: "Catalog" },
   { id: "indicators", label: "Indicators" },
   { id: "trace", label: "Trace" },
   { id: "digest", label: "Digest" },
@@ -81,7 +83,29 @@ const VIEWS: { id: View; label: string }[] = [
   { id: "desks", label: "Desks" },
 ];
 
-const EXPORTS = ["markdown", "csv", "json", "kev"] as const;
+const EXPORTS = ["markdown", "csv", "json", "kev", "opml", "tether"] as const;
+
+type Range = { preset: "all" | "24h" | "7d" | "30d" | "custom"; from: string; to: string };
+
+const ALL_RANGE: Range = { preset: "all", from: "", to: "" };
+
+function rangeQuery(range: Range): string {
+  if (range.preset === "all") return "";
+  const now = new Date();
+  let from = "";
+  let to = now.toISOString();
+  if (range.preset === "24h") from = new Date(now.getTime() - 86_400_000).toISOString();
+  else if (range.preset === "7d") from = new Date(now.getTime() - 7 * 86_400_000).toISOString();
+  else if (range.preset === "30d") from = new Date(now.getTime() - 30 * 86_400_000).toISOString();
+  else {
+    from = range.from ? new Date(`${range.from}T00:00:00`).toISOString() : "";
+    to = range.to ? new Date(`${range.to}T23:59:59`).toISOString() : "";
+  }
+  const parts: string[] = [];
+  if (from) parts.push(`from=${encodeURIComponent(from)}`);
+  if (to) parts.push(`to=${encodeURIComponent(to)}`);
+  return parts.length ? `&${parts.join("&")}` : "";
+}
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, {
@@ -136,16 +160,18 @@ export function DeskApp() {
   const [selected, setSelected] = useState<string | null>(null);
   const [busy, setBusy] = useState("Opening the wire");
   const [error, setError] = useState("");
+  const [range, setRange] = useState<Range>(ALL_RANGE);
 
   const desk = desks.find((item) => item.id === deskId) || desks[0];
 
-  const refresh = useCallback(async (id: string) => {
+  const refresh = useCallback(async (id: string, nextRange: Range = ALL_RANGE) => {
+    const query = rangeQuery(nextRange);
     const [nextStatus, nextMatches, nextIndicators, nextDesks, nextDigest] = await Promise.all([
       api<Status>("/api/status"),
-      api<Match[]>(`/api/matches?desk=${encodeURIComponent(id)}`),
+      api<Match[]>(`/api/matches?desk=${encodeURIComponent(id)}${query}`),
       api<Indicator[]>("/api/indicators"),
       api<Desk[]>("/api/desks"),
-      api<Match[]>(`/api/digest?desk=${encodeURIComponent(id)}`),
+      api<Match[]>(`/api/digest?desk=${encodeURIComponent(id)}${query}`),
     ]);
     setStatus(nextStatus);
     setMatches(nextMatches);
@@ -183,7 +209,7 @@ export function DeskApp() {
     setError("");
     try {
       await api("/api/wire", { method: "POST", body: JSON.stringify({ mode }) });
-      await refresh(deskId);
+      await refresh(deskId, range);
     } catch (exc) {
       setError(exc instanceof Error ? exc.message : "Wire failed");
     } finally {
@@ -196,10 +222,15 @@ export function DeskApp() {
     window.localStorage.setItem("wt-desk", id);
     setError("");
     try {
-      await refresh(id);
+      await refresh(id, range);
     } catch (exc) {
       setError(exc instanceof Error ? exc.message : "Could not switch desks");
     }
+  }
+
+  function applyRange(next: Range) {
+    setRange(next);
+    refresh(desk?.id || deskId, next).catch((exc) => setError(exc instanceof Error ? exc.message : "Could not filter"));
   }
 
   const lanes = useMemo(() => {
@@ -263,9 +294,39 @@ export function DeskApp() {
         ))}
       </nav>
 
-      <p className="border-b border-white/10 px-4 py-2 text-[11px] tracking-wide text-white/50 md:px-6">
-        {busy || error || reportLine(status, desk)}
-      </p>
+      <div className="flex flex-wrap items-center gap-2 border-b border-white/10 px-4 py-2 md:px-6">
+        <span className="text-[10px] tracking-[0.22em] uppercase text-white/35">Published</span>
+        {(["all", "24h", "7d", "30d"] as const).map((preset) => (
+          <button
+            key={preset}
+            className={`px-2 py-1 text-[11px] tracking-[0.16em] uppercase ${
+              range.preset === preset ? "bg-primary text-black" : "text-white/55"
+            }`}
+            onClick={() => applyRange({ preset, from: "", to: "" })}
+          >
+            {preset === "all" ? "All" : preset}
+          </button>
+        ))}
+        <label className="flex items-center gap-1 text-[10px] uppercase tracking-widest text-white/35">
+          From
+          <input
+            type="date"
+            className="border border-white/15 bg-black px-1 py-0.5 text-[11px] text-white"
+            value={range.from}
+            onChange={(event) => applyRange({ preset: "custom", from: event.target.value, to: range.to })}
+          />
+        </label>
+        <label className="flex items-center gap-1 text-[10px] uppercase tracking-widest text-white/35">
+          To
+          <input
+            type="date"
+            className="border border-white/15 bg-black px-1 py-0.5 text-[11px] text-white"
+            value={range.to}
+            onChange={(event) => applyRange({ preset: "custom", from: range.from, to: event.target.value })}
+          />
+        </label>
+        <span className="ml-auto text-[11px] tracking-wide text-white/50">{busy || error || reportLine(status, desk)}</span>
+      </div>
 
       <main className="px-0 py-0">
         {view === "highway" && (
@@ -280,10 +341,20 @@ export function DeskApp() {
             }}
           />
         )}
-        {view === "trace" && (
-          <Trace match={focus} matches={matches} onSelect={setSelected} onLabeled={() => refresh(deskId)} />
+        {view === "catalog" && (
+          <CatalogView
+            query={rangeQuery(range)}
+            matches={matches}
+            onOpen={(id) => {
+              setSelected(id);
+              setView("trace");
+            }}
+          />
         )}
-        {view === "indicators" && <Indicators indicators={indicators} onSaved={() => refresh(deskId)} />}
+        {view === "trace" && (
+          <Trace match={focus} matches={matches} onSelect={setSelected} onLabeled={() => refresh(desk?.id || deskId, range)} />
+        )}
+        {view === "indicators" && <Indicators indicators={indicators} onSaved={() => refresh(desk?.id || deskId, range)} />}
         {view === "digest" && (
           <Digest
             rows={digest}
@@ -295,11 +366,11 @@ export function DeskApp() {
             onRead={async () => {
               if (!desk) return;
               await api(`/api/desks/${desk.id}/digest-read`, { method: "POST" });
-              await refresh(desk.id);
+              await refresh(desk.id, range);
             }}
           />
         )}
-        {view === "export" && <Exports desk={desk} />}
+        {view === "export" && <Exports desk={desk} query={rangeQuery(range)} />}
         {view === "desks" && (
           <Desks desks={desks} indicators={indicators} activeId={desk?.id} onSaved={chooseDesk} />
         )}
@@ -623,16 +694,17 @@ function Digest({
   );
 }
 
-function Exports({ desk }: { desk: Desk | undefined }) {
+function Exports({ desk, query }: { desk: Desk | undefined; query: string }) {
   const [preview, setPreview] = useState("");
   const [format, setFormat] = useState(desk?.exports?.[0] || "markdown");
   const [error, setError] = useState("");
-  const formats = desk?.exports?.length ? desk.exports : [...EXPORTS];
+  const formats = [...(desk?.exports?.length ? desk.exports : ["markdown", "csv", "json", "kev"])];
+  for (const extra of ["opml", "tether"]) if (!formats.includes(extra)) formats.push(extra);
   async function load(kind: string) {
     setFormat(kind);
     setError("");
     try {
-      const text = await api<string>(`/api/export?desk=${encodeURIComponent(desk?.id || "")}&format=${kind}`);
+      const text = await api<string>(`/api/export?desk=${encodeURIComponent(desk?.id || "")}&format=${kind}${query}`);
       setPreview(text.slice(0, 5000));
     } catch (exc) {
       setPreview("");
@@ -643,8 +715,9 @@ function Exports({ desk }: { desk: Desk | undefined }) {
     <section className="px-5 py-5">
       <h2 className="text-xs tracking-[0.28em] uppercase text-white">Export pathways</h2>
       <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/55">
-        {desk?.name || "This desk"} only receives its own lanes. Markdown is the briefing. CSV and JSON are the packet
-        you can hand to another tool. Kev JSONL is built from hit and miss labels, so an unlabeled wire exports an empty file.
+        {desk?.name || "This desk"} only receives its own lanes, and the published-date window above is applied.
+        Markdown is the briefing. CSV and JSON are the match packet. OPML is the source list. Tether is the
+        source-to-decision packet: each configured source and the calls it produced. Kev JSONL still needs hit and miss labels.
       </p>
       <div className="mt-5 flex flex-wrap gap-2">
         {formats.map((kind, index) => (
@@ -654,7 +727,7 @@ function Exports({ desk }: { desk: Desk | undefined }) {
         ))}
         <a
           className="inline-flex h-7 items-center border border-white/20 px-3 text-xs uppercase tracking-widest text-white"
-          href={`/api/export?desk=${encodeURIComponent(desk?.id || "")}&format=${format}`}
+          href={`/api/export?desk=${encodeURIComponent(desk?.id || "")}&format=${format}${query}`}
         >
           Download {format}
         </a>

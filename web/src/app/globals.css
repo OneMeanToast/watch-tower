@@ -135,3 +135,49 @@
     font-family: var(--font-geist-mono), ui-monospace, monospace;
   }
 }
+
+@keyframes tether-dash {
+  to {
+    stroke-dashoffset: -180;
+  }
+}
+
+@keyframes catalog-pulse {
+  70% {
+    box-shadow: 0 0 0 7px rgba(231, 255, 74, 0);
+  }
+}
+
+@keyframes tether-scan {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.55;
+  }
+  100% {
+    transform: translateY(28rem);
+    opacity: 0;
+  }
+}
+
+.tether-flow {
+  stroke: #e7ff4a;
+  fill: none;
+  stroke-dasharray: 5 12;
+  animation: tether-dash 2.6s linear infinite;
+}
+
+.tether-dot {
+  fill: #f4f1ea;
+}
+
+.catalog-live {
+  animation: catalog-pulse 2.2s ease-out infinite;
+}
+
+.tether-scan {
+  background: linear-gradient(to bottom, transparent, rgba(231, 255, 74, 0.16), transparent);
+  animation: tether-scan 5.5s linear infinite;
+}

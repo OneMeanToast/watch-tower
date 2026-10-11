@@ -9,6 +9,9 @@ from wt.text import term_in
 
 
 def source_allowed(indicator: Indicator, item: Item) -> bool:
+    # A manual upload is something a person asked the wire to read.
+    if item.source == "upload":
+        return True
     if not indicator.sources:
         return True
     keys = {item.source}

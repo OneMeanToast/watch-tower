@@ -65,6 +65,80 @@ def to_markdown(rows: list[dict], *, desk_name: str) -> str:
     return "\n".join(lines).rstrip() + "\n"
 
 
+def to_opml(sources: list[dict]) -> str:
+    """OPML 2.0 source list. RSS rows carry xmlUrl; the rest are notes."""
+    lines = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<opml version="2.0">',
+        "  <head><title>Watch Tower sources</title></head>",
+        "  <body>",
+    ]
+    for row in sources:
+        text = _xml(row.get("name") or row.get("id") or "source")
+        kind = _xml(row.get("kind") or "")
+        url = row.get("url") or ""
+        if url and row.get("kind") == "rss":
+            lines.append(
+                f'    <outline text="{text}" title="{text}" type="rss" xmlUrl="{_xml(url)}" category="{kind}"/>'
+            )
+        else:
+            lines.append(f'    <outline text="{text}" title="{text}" category="{kind}"/>')
+    lines.extend(["  </body>", "</opml>", ""])
+    return "\n".join(lines)
+
+
+def to_tether(sources: list[dict], rows: list[dict], *, desk_name: str, since: str, until: str) -> str:
+    """One packet from sources to the decisions they became."""
+    compact_sources = [
+        {
+            "id": row.get("id"),
+            "name": row.get("name"),
+            "kind": row.get("kind"),
+            "status": row.get("status"),
+            "url": row.get("url") or "",
+            "items": row.get("items") or 0,
+            "newest": row.get("newest") or "",
+            "dated": bool(row.get("dated")),
+        }
+        for row in sources
+    ]
+    decisions = [
+        {
+            "action": row.get("action"),
+            "indicator_id": row.get("indicator_id"),
+            "title": row.get("title"),
+            "url": row.get("url"),
+            "source": row.get("source"),
+            "feed_id": row.get("feed_id"),
+            "published_at": row.get("published_at") or "",
+            "p_hit": row.get("p_hit"),
+            "reason": row.get("reason"),
+        }
+        for row in rows
+    ]
+    return json.dumps(
+        {
+            "desk": desk_name,
+            "since": since,
+            "until": until,
+            "sources": compact_sources,
+            "decisions": decisions,
+        },
+        ensure_ascii=False,
+        indent=2,
+    )
+
+
+def _xml(value: str) -> str:
+    return (
+        str(value)
+        .replace("&", "&amp;")
+        .replace('"', "&quot;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+    )
+
+
 def to_kev(labels_path: Path, indicators_dir: Path, desk: dict | None) -> str:
     lanes = None
     if desk and desk.get("indicators"):

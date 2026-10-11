@@ -11,11 +11,13 @@ from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel
 
 from wt import __version__
+from wt.catalog import build_catalog, parse_bound, probe_sources
 from wt.desks import get_desk, load_desks, upsert_desk
-from wt.exports import filter_rows, to_csv, to_json, to_kev, to_markdown
+from wt.exports import filter_rows, to_csv, to_json, to_kev, to_markdown, to_opml, to_tether
+from wt.uploads import UploadError, prepare_upload
 from wt.feedback import record_feedback
 from wt.indicators import IndicatorError, load_indicators, update_indicator
-from wt.pipeline import run_demo, run_live
+from wt.pipeline import run_demo, run_items, run_live
 from wt.settings import Settings, project_root
 from wt.store import Store
 
@@ -48,6 +50,13 @@ class IndicatorPatch(BaseModel):
     uncertain_min: float | None = None
 
 
+class UploadBody(BaseModel):
+    title: str = ""
+    text: str = ""
+    url: str = ""
+    published_at: str = ""
+
+
 class DeskBody(BaseModel):
     id: str
     name: str
@@ -73,10 +82,17 @@ def desk_settings(live: bool, root: Path | None = None) -> Settings:
     return settings
 
 
-def _rows(root: Path | None = None) -> list[dict]:
+def _bounds(since: str | None, until: str | None) -> tuple[str | None, str | None]:
+    try:
+        return parse_bound(since), parse_bound(until)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+def _rows(root: Path | None = None, *, since: str | None = None, until: str | None = None) -> list[dict]:
     store = Store(desk_db(root))
     try:
-        return [_match_dict(row) for row in store.list_matches(limit=400)]
+        return [_match_dict(row) for row in store.list_matches(since=since, until=until, limit=400)]
     finally:
         store.close()
 
@@ -107,6 +123,7 @@ def _match_dict(row) -> dict:
         "snippets": snippets,
         "trace": trace,
         "event_id": row["item_event"] if "item_event" in keys else "",
+        "published_at": row["item_ts"] if "item_ts" in keys else "",
         "created_at": row["created_at"],
     }
 
@@ -174,8 +191,70 @@ def wire(body: WireBody) -> dict:
 
 
 @app.get("/matches")
-def matches(desk: str | None = None) -> list[dict]:
-    return _visible(_rows(), desk)
+def matches(desk: str | None = None, since: str | None = None, until: str | None = None) -> list[dict]:
+    start, end = _bounds(since, until)
+    return _visible(_rows(since=start, until=end), desk)
+
+
+@app.get("/catalog")
+def catalog(since: str | None = None, until: str | None = None) -> dict:
+    root = project_root()
+    start, end = _bounds(since, until)
+    store = Store(desk_db(root))
+    try:
+        payload = build_catalog(store, root=root, since=start, until=end)
+        if since or until:
+            payload["items"] = store.list_items(since=start, until=end, limit=80)
+        else:
+            payload["items"] = store.list_items(limit=80)
+    finally:
+        store.close()
+    return payload
+
+
+@app.post("/catalog/probe")
+def catalog_probe() -> dict:
+    root = project_root()
+    store = Store(desk_db(root))
+    try:
+        found = probe_sources(store, root=root)
+    finally:
+        store.close()
+    return {"probed": len(found), "live": sum(1 for row in found.values() if row.get("ok"))}
+
+
+@app.post("/catalog/upload")
+def catalog_upload(body: UploadBody) -> dict:
+    try:
+        item, method, note = prepare_upload(
+            title=body.title,
+            text=body.text,
+            url=body.url,
+            published_at=body.published_at,
+        )
+    except UploadError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    settings = desk_settings(False)
+    store = Store(settings.db_path)
+    try:
+        report = run_items(settings, [item], store)
+        store.record_intake(item.id, kind="upload", method=method, note=note)
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    finally:
+        store.close()
+    return {
+        "id": item.id,
+        "title": item.title,
+        "method": method,
+        "published_at": item.ts.isoformat(),
+        "items_new": report.items_new,
+        "duplicates": report.duplicates,
+        "pushes": len(report.pushes),
+        "digests": len(report.digests),
+    }
 
 
 @app.get("/matches/{match_id}")
@@ -220,9 +299,10 @@ def save_indicator(indicator_id: str, patch: IndicatorPatch) -> dict:
 
 
 @app.get("/digest")
-def digest(desk: str | None = None) -> list[dict]:
+def digest(desk: str | None = None, since: str | None = None, until: str | None = None) -> list[dict]:
     root = project_root()
-    rows = [row for row in _visible(_rows(root), desk, root) if row["action"] == "digest"]
+    start, end = _bounds(since, until)
+    rows = [row for row in _visible(_rows(root, since=start, until=end), desk, root) if row["action"] == "digest"]
     chosen = get_desk(desk, root) if desk else None
     seen = (chosen or {}).get("digest_seen_at") or ""
     if seen:
@@ -254,15 +334,26 @@ def save_desk(desk_id: str, body: DeskBody) -> dict:
 
 
 @app.get("/export")
-def export(desk: str | None = None, format: str = "markdown"):
+def export(
+    desk: str | None = None,
+    format: str = "markdown",
+    since: str | None = None,
+    until: str | None = None,
+):
     root = project_root()
     chosen = get_desk(desk, root) if desk else None
     if desk and chosen is None:
         raise HTTPException(status_code=404, detail="unknown desk")
     name = chosen["name"] if chosen else "All lanes"
     kind = format.strip().lower()
-    rows = filter_rows(_rows(root), chosen)
+    start, end = _bounds(since, until)
+    rows = filter_rows(_rows(root, since=start, until=end), chosen)
     settings = desk_settings(False, root)
+    store = Store(settings.db_path)
+    try:
+        catalog = build_catalog(store, root=root, since=start, until=end)
+    finally:
+        store.close()
     if kind == "markdown":
         body = to_markdown(rows, desk_name=name)
         media = "text/markdown"
@@ -275,8 +366,14 @@ def export(desk: str | None = None, format: str = "markdown"):
     elif kind == "kev":
         body = to_kev(settings.labels_path, settings.indicators_dir, chosen)
         media = "application/x-ndjson"
+    elif kind == "opml":
+        body = to_opml(catalog["sources"])
+        media = "text/x-opml"
+    elif kind == "tether":
+        body = to_tether(catalog["sources"], rows, desk_name=name, since=start or "", until=end or "")
+        media = "application/json"
     else:
-        raise HTTPException(status_code=400, detail="format must be markdown, csv, json, or kev")
+        raise HTTPException(status_code=400, detail="format must be markdown, csv, json, kev, opml, or tether")
     filename = f"watch-tower-{desk or 'all'}.{_ext(kind)}"
     return PlainTextResponse(
         body,
@@ -286,7 +383,7 @@ def export(desk: str | None = None, format: str = "markdown"):
 
 
 def _ext(kind: str) -> str:
-    return {"markdown": "md", "csv": "csv", "json": "json", "kev": "jsonl"}[kind]
+    return {"markdown": "md", "csv": "csv", "json": "json", "kev": "jsonl", "opml": "opml", "tether": "json"}[kind]
 
 
 def _indicator_dict(indicator) -> dict:

@@ -85,6 +85,13 @@ CREATE TABLE IF NOT EXISTS feedback (
   note TEXT NOT NULL DEFAULT '',
   created_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS intake (
+  item_id TEXT PRIMARY KEY,
+  kind TEXT NOT NULL,
+  method TEXT NOT NULL,
+  note TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL
+);
 """
 
 
@@ -151,6 +158,17 @@ class Store:
             self.conn.execute(
                 "ALTER TABLE matches ADD COLUMN trace_json TEXT NOT NULL DEFAULT '[]'"
             )
+        self.conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS intake (
+              item_id TEXT PRIMARY KEY,
+              kind TEXT NOT NULL,
+              method TEXT NOT NULL,
+              note TEXT NOT NULL DEFAULT '',
+              created_at TEXT NOT NULL
+            )
+            """
+        )
 
     def close(self) -> None:
         self.conn.close()
@@ -444,20 +462,150 @@ class Store:
             )
         return found
 
-    def list_matches(self, *, action: str | None = None, limit: int = 300) -> list[sqlite3.Row]:
+    def list_matches(
+        self,
+        *,
+        action: str | None = None,
+        since: str | None = None,
+        until: str | None = None,
+        limit: int = 300,
+    ) -> list[sqlite3.Row]:
         sql = """
             SELECT m.*, i.title AS item_title, i.url AS item_url, i.source AS item_source,
-                   i.feed_id AS item_feed, i.text AS item_text, i.event_id AS item_event
+                   i.feed_id AS item_feed, i.text AS item_text, i.event_id AS item_event,
+                   i.ts AS item_ts
             FROM matches m
             JOIN items i ON i.id = m.item_id
         """
+        clauses: list[str] = []
         params: list = []
         if action:
-            sql += " WHERE m.action = ?"
+            clauses.append("m.action = ?")
             params.append(action)
-        sql += " ORDER BY m.created_at DESC LIMIT ?"
+        if since:
+            clauses.append("i.ts >= ?")
+            params.append(since)
+        if until:
+            clauses.append("i.ts <= ?")
+            params.append(until)
+        if clauses:
+            sql += " WHERE " + " AND ".join(clauses)
+        sql += " ORDER BY i.ts DESC LIMIT ?"
         params.append(limit)
         return self.conn.execute(sql, params).fetchall()
+
+    def item_stats(self, *, since: str | None = None, until: str | None = None) -> list[dict]:
+        sql = """
+            SELECT source, feed_id, COUNT(*) AS items, MIN(ts) AS oldest, MAX(ts) AS newest
+            FROM items
+        """
+        clauses: list[str] = []
+        params: list = []
+        if since:
+            clauses.append("ts >= ?")
+            params.append(since)
+        if until:
+            clauses.append("ts <= ?")
+            params.append(until)
+        if clauses:
+            sql += " WHERE " + " AND ".join(clauses)
+        sql += " GROUP BY source, feed_id"
+        rows = self.conn.execute(sql, params).fetchall()
+        return [
+            {
+                "source": str(row["source"]),
+                "feed_id": str(row["feed_id"] or ""),
+                "items": int(row["items"]),
+                "oldest": str(row["oldest"] or ""),
+                "newest": str(row["newest"] or ""),
+            }
+            for row in rows
+        ]
+
+    def list_items(
+        self,
+        *,
+        source: str | None = None,
+        feed_id: str | None = None,
+        since: str | None = None,
+        until: str | None = None,
+        limit: int = 40,
+    ) -> list[dict]:
+        sql = "SELECT id, title, url, source, feed_id, ts, text FROM items"
+        clauses: list[str] = []
+        params: list = []
+        if source:
+            clauses.append("source = ?")
+            params.append(source)
+        if feed_id is not None:
+            clauses.append("feed_id = ?")
+            params.append(feed_id)
+        if since:
+            clauses.append("ts >= ?")
+            params.append(since)
+        if until:
+            clauses.append("ts <= ?")
+            params.append(until)
+        if clauses:
+            sql += " WHERE " + " AND ".join(clauses)
+        sql += " ORDER BY ts DESC LIMIT ?"
+        params.append(limit)
+        rows = self.conn.execute(sql, params).fetchall()
+        return [
+            {
+                "id": row["id"],
+                "title": row["title"],
+                "url": row["url"] or "",
+                "source": row["source"],
+                "feed_id": row["feed_id"] or "",
+                "published_at": row["ts"],
+                "words": len((row["text"] or "").split()),
+            }
+            for row in rows
+        ]
+
+    def record_intake(self, item_id: str, *, kind: str, method: str, note: str = "") -> None:
+        self.conn.execute(
+            """
+            INSERT INTO intake (item_id, kind, method, note, created_at)
+            VALUES (?, ?, ?, ?, ?)
+            ON CONFLICT(item_id) DO UPDATE SET
+              kind = excluded.kind,
+              method = excluded.method,
+              note = excluded.note,
+              created_at = excluded.created_at
+            """,
+            (item_id, kind, method, note, utcnow().isoformat()),
+        )
+        self.conn.commit()
+
+    def list_intake(self, *, limit: int = 80) -> list[dict]:
+        rows = self.conn.execute(
+            """
+            SELECT n.item_id AS item_id, n.kind AS kind, n.method AS method,
+                   n.note AS note, n.created_at AS created_at,
+                   i.title AS title, i.url AS url, i.ts AS ts, i.source AS source
+            FROM intake n
+            LEFT JOIN items i ON i.id = n.item_id
+            ORDER BY n.created_at DESC
+            LIMIT ?
+            """,
+            (limit,),
+        ).fetchall()
+        return [
+            {
+                "item_id": row["item_id"],
+                "kind": row["kind"],
+                "method": row["method"],
+                "note": row["note"] or "",
+                "created_at": row["created_at"],
+                "title": row["title"] or "",
+                "url": row["url"] or "",
+                "published_at": row["ts"] or "",
+                "source": row["source"] or "",
+            }
+            for row in rows
+        ]
 
     def has_push(self, match_id: str) -> bool:
         row = self.conn.execute(

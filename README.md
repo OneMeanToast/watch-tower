@@ -301,10 +301,29 @@ writes Kev fine-tune rows: the item text as `state`, and the indicator's `hit` q
 
 `python eval/run_eval.py` (or `wt eval`) scores the lexical decider on the checked-in fixture labels and prints precision, recall, and Brier score.
 
+## Forensic extraction
+
+SQLite is the source of truth: documents, mention spans, entities, aliases, reversible resolution judgments, relations, and events with roles. Every assertion points at a character span. The type list lives in `config/ontology.yaml` (a FollowTheMoney-compatible core, plus AI and cyber types). A graph view only reads that database. LadybugDB is not included. A local-LLM deep mode is a disabled proposer interface.
+
+The stub proposer is the default (`WT_EXTRACTOR=stub`). It uses a gazetteer, a CVE pattern, and `dateparser` for dates and amounts. `pip install -e ".[forensics]"` adds spaCy, GLiNER, and fastcoref. `WT_EXTRACTOR=auto` uses those when they import, and falls back to the stub. Tests never download weights. REBEL, Maverick, GENRE, and GLiREL are not used.
+
+Jev, when `JEV_API_KEY` is set and the item is not local-only, types and checks each candidate in one billed request per chunk. Choice options are rotated. Dates and numbers stay in code. The same monthly cap and cache apply. Wikidata linking is a stub. If the key is missing, the budget is spent, or the call fails, the local candidates are kept.
+
+A high-value item is queued when an alert is pushed, the user stars or rips it, or the source is a paper (`arxiv`, `openalex`) or an advisory (`cisa_kev`, `nvd`). The rule and the 50-extraction daily cap are in `config/ontology.yaml`. `wt extract` drains the queue.
+
+The Extract desk (nav on [http://127.0.0.1:47221](http://127.0.0.1:47221)) highlights spans by type, lists a review queue sorted by uncertainty, stores every accept, reject, edit, and merge as a label, and opens an entity page. The link chart is Sigma.js on a Graphology graph. A neighbourhood of at most 12 nodes uses Cytoscape.js. Highlights are a small React layer. `@recogito/text-annotator` is BSD-3-Clause and was left out so the desk stays on the existing stack.
+
+Keyless sources: CISA KEV, NVD 2.0, the Hugging Face Hub models API, and the Federal Register JSON API. The Federal Register RSS feed is unchanged. GDELT GKG and events have parsers; live zip download is off (`gkg_enabled: false`) because those files are large. OpenAlex sends `WT_OPENALEX_KEY` as the `api_key` query parameter when the variable is set.
+
+`wt extract-eval` scores exact span and type matches against `eval/extraction_gold.json`.
+
+Not in this build, pending a later decision: LadybugDB, a local-LLM deep mode, Telegram, ACLED, and ReliefWeb.
+
 ## Layout
 
 ```text
-config/sources.yaml          feeds, arXiv, GDELT, OpenAlex, Bluesky
+config/sources.yaml          feeds, arXiv, GDELT, OpenAlex, KEV, NVD, Hub, Federal Register
+config/ontology.yaml         forensic types, high-value rule, daily cap
 config/feeds/worldmonitor.yaml  feed URLs mined as data, off by default
 config/indicators/*.yaml     one indicator per file
 config/desks.yaml            seed desks; live edits go to data/desks.yaml
@@ -333,7 +352,7 @@ Checked on 7 Oct 2026 while building this:
 - **DeBERTa prompt-injection v2** is optional and was not downloaded. Canaries are blocked by the offline heuristic.
 - **Qwen3-Embedding-0.6B** is the live default when sentence-transformers is installed. Demo mode and machines without the package use a hashing embedder so the pipeline runs with no download. Do not reuse hashing thresholds as if they were Qwen scores.
 - **sqlite-vec** is used through `vec_distance_cosine` on float32 blob columns (the documented non-virtual-table path). `vec0` virtual tables want integer row ids and a frozen dimension, which fights text ids and switching embedders.
-- **Entities** in the YAML are literal phrases. GLiNER is not bundled.
+- **Entities** in indicator YAML are still literal phrases. Forensic extraction is a separate path (`config/ontology.yaml`, the Extract desk). GLiNER is an optional extra, not imported by the default install.
 - **Feedback links** in an alert still use the standard-library server (`wt feedback-server`). The desk is a separate FastAPI process plus the Next.js screen.
 - **Scheduler** is a sleep loop (`wt serve`) or cron, not APScheduler.
 - **Bluesky** is a bounded sample per cycle on `jetstream2.us-east.bsky.network`, which is the current public subscribe host. The older path in the research note can be pasted into `endpoint` if you prefer it.

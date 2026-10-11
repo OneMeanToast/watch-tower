@@ -6,8 +6,13 @@ import logging
 
 from wt.ingest.arxiv import fetch_arxiv
 from wt.ingest.bluesky import collect_posts
+from wt.ingest.cisa_kev import fetch_cisa_kev
+from wt.ingest.federal_register import fetch_federal_register
 from wt.ingest.gdelt import fetch_gdelt
+from wt.ingest.gdelt_gkg import fetch_gdelt_graphs
+from wt.ingest.hfhub import fetch_hf_hub
 from wt.ingest.mastodon import fetch_mastodon
+from wt.ingest.nvd import fetch_nvd
 from wt.ingest.openalex import fetch_openalex
 from wt.ingest.rss import fetch_rss
 from wt.ingest.selector import due_feeds, fetch_selector, stamp_feeds
@@ -53,6 +58,31 @@ def ingest_all(sources: dict, store) -> tuple[list[Item], list[str]]:
         items.extend(fetch_openalex(sources.get("openalex") or {}))
     except Exception as exc:
         errors.append(f"openalex: {exc}")
+
+    try:
+        items.extend(fetch_cisa_kev(sources.get("cisa_kev") or {}))
+    except Exception as exc:
+        errors.append(f"cisa_kev: {exc}")
+
+    try:
+        items.extend(fetch_nvd(sources.get("nvd") or {}))
+    except Exception as exc:
+        errors.append(f"nvd: {exc}")
+
+    try:
+        items.extend(fetch_hf_hub(sources.get("hf_hub") or {}))
+    except Exception as exc:
+        errors.append(f"hf_hub: {exc}")
+
+    try:
+        items.extend(fetch_federal_register(sources.get("federal_register") or {}))
+    except Exception as exc:
+        errors.append(f"federal_register: {exc}")
+
+    try:
+        items.extend(fetch_gdelt_graphs(sources.get("gdelt") or {}))
+    except Exception as exc:
+        errors.append(f"gdelt_gkg: {exc}")
 
     bluesky_cfg = sources.get("bluesky") or {}
     if bluesky_cfg.get("enabled"):

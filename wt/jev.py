@@ -113,6 +113,29 @@ class JevDecider:
             log.warning("jev failed (%s); using the local decider", exc)
             return self._local_many(item, candidates, why="error")
 
+    def ask(self, state: str, questions: dict) -> dict:
+        """One billed System One call. Extraction uses this so the cap still applies."""
+        if not self.api_key:
+            raise DeciderError("JEV_API_KEY is not set")
+        if self._budget_blocked():
+            raise DeciderError("jev monthly cap is spent")
+        self._warn_daily()
+        key = cache_key(
+            artifact_hash=sha256_text(state),
+            indicator_id="extract",
+            prompt_version=self.prompt_version,
+            questions=questions,
+            model=self.model,
+        )
+        hit = self._cache_get(key)
+        if isinstance(hit, dict) and isinstance(hit.get("payload"), dict):
+            self._record(0, 0, 0.0, cached=1, calls=0)
+            return hit["payload"]
+        payload = self._post(state, questions)
+        self._bill(payload, state, questions, cached=0)
+        self._cache_put(key, "extract", {"payload": payload})
+        return payload
+
     def same_event(self, item: Item, other_title: str, other_text: str) -> bool:
         if self._must_stay_local(item) or self._budget_blocked():
             return self._local_same_event(item, other_title, other_text)

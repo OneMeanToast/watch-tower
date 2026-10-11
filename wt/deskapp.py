@@ -15,6 +15,7 @@ from wt.catalog import build_catalog, parse_bound, probe_sources
 from wt.cost import resolve_daily_warn, resolve_monthly, resolve_rate, summary as cost_summary
 from wt.desks import get_desk, load_desks, upsert_desk
 from wt.exports import filter_rows, to_csv, to_json, to_kev, to_markdown, to_opml, to_tether
+from wt.extract_graph.api import router as extract_router
 from wt.rip.api import router as rip_router
 from wt.rip.pipeline import RipError, commit_rip
 from wt.uploads import UploadError, prepare_upload
@@ -26,6 +27,7 @@ from wt.store import Store
 
 app = FastAPI(title="Watch Tower desk")
 app.include_router(rip_router)
+app.include_router(extract_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[

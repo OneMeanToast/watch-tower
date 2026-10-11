@@ -75,9 +75,31 @@ arxiv:
 
 gdelt:
   max_records: 15
+  # GKG and events zips are large. The parsers exist; live download stays off.
+  gkg_enabled: false
+  events_enabled: false
   queries:
     - '(open-weight OR "open source") (model OR LLM) (release OR released)'
     - '("AI Act" OR "artificial intelligence regulation")'
+
+cisa_kev:
+  enabled: true
+  limit: 20
+
+nvd:
+  enabled: true
+  keyword: "artificial intelligence"
+  results_per_page: 10
+
+hf_hub:
+  enabled: true
+  search: "open-weight"
+  limit: 10
+
+federal_register:
+  enabled: true
+  term: "artificial intelligence"
+  per_page: 10
 
 openalex:
   # Optional. A free key in WT_OPENALEX_KEY raises the daily budget.

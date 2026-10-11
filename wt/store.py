@@ -148,6 +148,9 @@ class Store:
         self.has_vec, self.vec_version = self._load_vec()
         self.conn.executescript(SCHEMA)
         self._ensure_columns()
+        from wt.extract_graph.schema import ensure_extract_schema
+
+        ensure_extract_schema(self.conn)
         self.conn.commit()
 
     def _load_vec(self) -> tuple[bool, str]:

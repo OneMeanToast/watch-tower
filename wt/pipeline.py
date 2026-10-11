@@ -34,6 +34,15 @@ from wt.text import clean_text, sha256_text, utcnow
 log = logging.getLogger("wt.pipeline")
 
 
+def _note_extract(store, item, *, pushed: bool) -> None:
+    try:
+        from wt.extract_graph.queue import note_high_value
+
+        note_high_value(store, item, pushed=pushed)
+    except Exception:
+        log.exception("extract enqueue failed for %s", getattr(item, "id", ""))
+
+
 def load_sources(path: str | Path) -> dict:
     file = Path(path)
     if not file.is_file():
@@ -149,7 +158,9 @@ def run_items(
         }
         candidates = select_candidates(item, indicators, cosines, top_k=settings.top_k)
         if not candidates:
+            _note_extract(store, item, pushed=False)
             continue
+        item_pushed = False
         enriched = enrich_item(item, enabled=settings.fetch_fulltext)
         if enriched.text != item.text:
             store.update_item_text(item.id, enriched.text)
@@ -245,6 +256,7 @@ def run_items(
             )
             store.save_match(result, decision.answers)
             if action == "push":
+                item_pushed = True
                 channels = usable_channels(
                     cand.indicator.alert.channels,
                     [settings.ntfy_url] if settings.ntfy_url else [],
@@ -265,6 +277,7 @@ def run_items(
                     echo=True,
                 )
             results.append(result)
+        _note_extract(store, item, pushed=item_pushed)
     backends = sorted({row.backend for row in results}) or [decider.name]
     return CycleReport(
         items_seen=len(items),

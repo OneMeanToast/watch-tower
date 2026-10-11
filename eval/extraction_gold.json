@@ -1,0 +1,16 @@
+{
+  "doc_id": "fx-advisory-1",
+  "text": "On 2 March 2026, CISA added CVE-2024-12345 to the Known Exploited Vulnerabilities catalog. The flaw affects ExampleSoft Gateway, built by ExampleSoft. MIT researchers said the Llama weights were released under an open license. ExampleSoft Inc. confirmed it may adopt Llama.",
+  "spans": [
+    {"surface": "2 March 2026", "type": "Date", "start": 3, "end": 15},
+    {"surface": "CISA", "type": "PublicBody", "start": 17, "end": 21},
+    {"surface": "CVE-2024-12345", "type": "Vulnerability", "start": 28, "end": 42},
+    {"surface": "ExampleSoft Gateway", "type": "SoftwareProduct", "start": 108, "end": 127},
+    {"surface": "ExampleSoft", "type": "Organization", "start": 138, "end": 149},
+    {"surface": "MIT", "type": "Organization", "start": 151, "end": 154},
+    {"surface": "Llama", "type": "AIModel", "start": 176, "end": 181},
+    {"surface": "open license", "type": "Regulation", "start": 213, "end": 225},
+    {"surface": "ExampleSoft Inc.", "type": "Company", "start": 227, "end": 243},
+    {"surface": "Llama", "type": "AIModel", "start": 267, "end": 272}
+  ]
+}

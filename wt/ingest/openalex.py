@@ -10,24 +10,33 @@ from wt.normalize import make_item
 from wt.text import parse_time
 
 
-def fetch_openalex(cfg: dict) -> list[Item]:
-    search = (cfg.get("search") or "").strip()
-    if not search:
-        return []
-    per_page = int(cfg.get("per_page", 10))
+def openalex_request(cfg: dict) -> tuple[dict, dict]:
+    """Query params plus headers. A key goes on the query string as api_key."""
     params = {
-        "search": search,
-        "per-page": per_page,
+        "search": (cfg.get("search") or "").strip(),
+        "per-page": int(cfg.get("per_page", 10)),
         "sort": "publication_date:desc",
     }
     mailto = os.environ.get("WT_OPENALEX_MAILTO") or cfg.get("mailto")
     if mailto:
         params["mailto"] = mailto
-    headers = {}
+    headers: dict[str, str] = {}
     api_key = os.environ.get("WT_OPENALEX_KEY") or cfg.get("api_key")
     if api_key:
+        params["api_key"] = api_key
         headers["Authorization"] = f"Bearer {api_key}"
-    with client() as http:
+    return params, headers
+
+
+def fetch_openalex(cfg: dict, http=None) -> list[Item]:
+    search = (cfg.get("search") or "").strip()
+    if not search:
+        return []
+    params, headers = openalex_request(cfg)
+    own = http is None
+    if own:
+        http = client()
+    try:
         response = http.get("https://api.openalex.org/works", params=params, headers=headers)
         if response.status_code in {401, 403}:
             raise RuntimeError(
@@ -36,6 +45,9 @@ def fetch_openalex(cfg: dict) -> list[Item]:
             )
         response.raise_for_status()
         payload = response.json()
+    finally:
+        if own:
+            http.close()
     return items_from_openalex(payload)
 
 

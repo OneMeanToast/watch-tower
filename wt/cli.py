@@ -110,6 +110,12 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("eval", help="score the lexical decider on eval/labels.jsonl").set_defaults(
         func=_cmd_eval
     )
+    extract = sub.add_parser("extract", help="drain the high-value extraction queue")
+    extract.add_argument("--limit", type=int, default=20)
+    extract.set_defaults(func=_cmd_extract)
+    sub.add_parser(
+        "extract-eval", help="score the stub proposer on eval/extraction_gold.json"
+    ).set_defaults(func=_cmd_extract_eval)
 
     args = parser.parse_args(argv)
     logging.basicConfig(
@@ -516,6 +522,56 @@ def _cmd_eval(args) -> int:
             f"p={row['p_hit']:.2f} sev={row['severity']:.2f} -> {row['action']}"
         )
     return 0 if metrics["fp"] == 0 and metrics["tp"] > 0 else 1
+
+
+def _cmd_extract(args) -> int:
+    settings = Settings.from_env()
+    store = Store(settings.db_path)
+    ask = None
+    if settings.jev_api_key:
+        from wt.jev import JevDecider
+
+        ask = JevDecider(
+            settings.jev_base_url,
+            api_key=settings.jev_api_key,
+            model=settings.jev_model,
+            store=store,
+            usd_per_mtok=settings.jev_usd_per_mtok,
+            monthly_usd=settings.jev_monthly_usd,
+            daily_warn_usd=settings.jev_daily_warn_usd,
+            prompt_version=settings.jev_prompt_version,
+            allow_private=settings.jev_allow_private,
+        ).ask
+    from wt.extract_graph.propose import build_proposer
+    from wt.extract_graph.queue import drain
+
+    done = drain(
+        store,
+        ask=ask,
+        proposer=build_proposer(settings.extractor),
+        limit=max(1, args.limit),
+    )
+    print(f"extracted {done}")
+    store.close()
+    return 0
+
+
+def _cmd_extract_eval(_args) -> int:
+    from wt.extract_graph.evalkit import gold_spans, score_file, span_scores
+    from wt.extract_graph.propose import StubProposer
+    from wt.extract_graph.run import FIXTURE_TEXT
+
+    path = project_root() / "eval" / "extraction_gold.json"
+    proposal = StubProposer().propose(FIXTURE_TEXT)
+    predicted = {(row.start, row.end, row.type) for row in proposal.mentions}
+    metrics = score_file(path, predicted)
+    print(
+        f"spans={metrics['predicted']} gold={metrics['gold']} "
+        f"precision={metrics['precision']:.2f} recall={metrics['recall']:.2f} "
+        f"tp={metrics['tp']} fp={metrics['fp']} fn={metrics['fn']}"
+    )
+    del gold_spans, span_scores
+    return 0 if metrics["tp"] > 0 else 1
 
 
 def _cmd_export(args) -> int:

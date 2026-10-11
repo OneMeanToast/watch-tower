@@ -74,6 +74,7 @@ class Settings:
     jev_daily_warn_usd: float = 1.0
     jev_prompt_version: str = "1"
     jev_allow_private: bool = False
+    extractor: str = "stub"
 
     @classmethod
     def from_env(cls, root: Path | None = None) -> Settings:
@@ -118,6 +119,7 @@ class Settings:
             jev_prompt_version=os.environ.get("WT_JEV_PROMPT_VERSION", "1").strip() or "1",
             jev_allow_private=os.environ.get("WT_JEV_ALLOW_PRIVATE", "0")
             not in {"0", "false", "no", ""},
+            extractor=os.environ.get("WT_EXTRACTOR", "stub").strip().lower() or "stub",
         )
 
     @classmethod

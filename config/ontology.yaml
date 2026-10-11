@@ -1,0 +1,99 @@
+# Forensic types. SQLite is the source of truth. This file is the swap point
+# for the ontology: FollowTheMoney-compatible core, plus cyber and AI types.
+# LadybugDB, a local LLM, and the final schema are not wired here.
+
+version: 1
+
+high_value:
+  daily_cap: 50
+  when:
+    - pushed_alert
+    - starred
+    - ripped
+    - paper
+    - advisory
+  paper_sources: [arxiv, openalex]
+  advisory_sources: [cisa_kev, nvd]
+
+# Longest surface wins. The stub proposer uses this list. The model proposer does not.
+stub_gazetteer:
+  - {surface: "ExampleSoft Gateway", type: SoftwareProduct}
+  - {surface: "ExampleSoft Inc.", type: Company}
+  - {surface: "ExampleSoft", type: Organization}
+  - {surface: "CISA", type: PublicBody}
+  - {surface: "MIT", type: Organization}
+  - {surface: "Llama", type: AIModel}
+
+entity_types:
+  - {id: Person, group: core, ftm: Person}
+  - {id: Organization, group: core, ftm: Organization}
+  - {id: Company, group: core, ftm: Company}
+  - {id: PublicBody, group: core, ftm: PublicBody}
+  - {id: Address, group: core, ftm: Address}
+  - {id: Vessel, group: core, ftm: Vessel}
+  - {id: Airplane, group: core, ftm: Airplane}
+  - {id: Vehicle, group: core, ftm: Vehicle}
+  - {id: Event, group: core, ftm: Event}
+  - {id: Document, group: core, ftm: Document}
+  - {id: ThreatActor, group: cyber, stix: threat-actor}
+  - {id: IntrusionSet, group: cyber, stix: intrusion-set}
+  - {id: Campaign, group: cyber, stix: campaign}
+  - {id: Malware, group: cyber, stix: malware}
+  - {id: Tool, group: cyber, stix: tool}
+  - {id: Vulnerability, group: cyber, stix: vulnerability}
+  - {id: AttackPattern, group: cyber, stix: attack-pattern}
+  - {id: Indicator, group: cyber, stix: indicator}
+  - {id: Infrastructure, group: cyber, stix: infrastructure}
+  - {id: Location, group: cyber, stix: location}
+  - {id: Report, group: cyber, stix: report}
+  - {id: AIModel, group: ai}
+  - {id: Dataset, group: ai}
+  - {id: Benchmark, group: ai}
+  - {id: Paper, group: ai}
+  - {id: SoftwareProduct, group: ai}
+  - {id: Regulation, group: ai}
+  - {id: Date, group: code}
+  - {id: Quantity, group: code}
+
+relation_types:
+  - {id: ownership, group: core, ftm: Ownership}
+  - {id: directorship, group: core, ftm: Directorship}
+  - {id: membership, group: core, ftm: Membership}
+  - {id: employment, group: core, ftm: Employment}
+  - {id: family, group: core, ftm: Family}
+  - {id: associate, group: core, ftm: Associate}
+  - {id: payment, group: core, ftm: Payment}
+  - {id: sanction, group: core, ftm: Sanction}
+  - {id: unknown_link, group: core, ftm: UnknownLink}
+  - {id: affects, group: cyber}
+  - {id: manufacturer, group: ai}
+  - {id: adopts, group: ai}
+
+event_types:
+  - {id: MakePublicStatement, cameo: "01", group: cameo}
+  - {id: Appeal, cameo: "02", group: cameo}
+  - {id: ExpressIntentToCooperate, cameo: "03", group: cameo}
+  - {id: Consult, cameo: "04", group: cameo}
+  - {id: DiplomaticCooperation, cameo: "05", group: cameo}
+  - {id: MaterialCooperation, cameo: "06", group: cameo}
+  - {id: ProvideAid, cameo: "07", group: cameo}
+  - {id: Yield, cameo: "08", group: cameo}
+  - {id: Investigate, cameo: "09", group: cameo}
+  - {id: Demand, cameo: "10", group: cameo}
+  - {id: Disapprove, cameo: "11", group: cameo}
+  - {id: Reject, cameo: "12", group: cameo}
+  - {id: Threaten, cameo: "13", group: cameo}
+  - {id: Protest, cameo: "14", group: cameo}
+  - {id: ExhibitForcePosture, cameo: "15", group: cameo}
+  - {id: ReduceRelations, cameo: "16", group: cameo}
+  - {id: Coerce, cameo: "17", group: cameo}
+  - {id: Assault, cameo: "18", group: cameo}
+  - {id: Fight, cameo: "19", group: cameo}
+  - {id: UnconventionalViolence, cameo: "20", group: cameo}
+  - {id: ModelRelease, cameo: "", group: ai}
+  - {id: BenchmarkResult, cameo: "", group: ai}
+  - {id: Funding, cameo: "", group: ai}
+  - {id: Acquisition, cameo: "", group: ai}
+  - {id: PolicyAction, cameo: "01", group: ai}
+  - {id: SecurityIncident, cameo: "18", group: ai}
+  - {id: Publication, cameo: "01", group: ai}

@@ -123,8 +123,59 @@ function Markup({ text, mentions, onPick }: { text: string; mentions: Mention[];
   );
 }
 
+function canvasInkCount(canvas: HTMLCanvasElement) {
+  const gl = canvas.getContext("webgl2") || canvas.getContext("webgl");
+  if (!gl) return 0;
+  const pixel = new Uint8Array(4);
+  let ink = 0;
+  for (let y = 8; y < canvas.height; y += 24) {
+    for (let x = 8; x < canvas.width; x += 24) {
+      gl.readPixels(x, y, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
+      if (pixel[3] > 16 && pixel[0] + pixel[1] + pixel[2] > 24) ink += 1;
+    }
+  }
+  return ink;
+}
+
+function LayoutChart({ graph, onPick }: { graph: Graph; onPick: (id: string) => void }) {
+  const placed = graph.nodes.map((node, index) => {
+    const angle = (Math.PI * 2 * index) / Math.max(graph.nodes.length, 1);
+    return { ...node, x: Math.cos(angle), y: Math.sin(angle) };
+  });
+  const at = Object.fromEntries(placed.map((node) => [node.id, node]));
+  return (
+    <svg viewBox="-1.6 -1.55 3.2 3.1" className="h-80 w-full bg-black" role="img" aria-label="Entity link chart">
+      {graph.edges.map((edge) => {
+        const source = at[edge.source];
+        const target = at[edge.target];
+        if (!source || !target) return null;
+        return (
+          <line
+            key={edge.id}
+            x1={source.x}
+            y1={source.y}
+            x2={target.x}
+            y2={target.y}
+            stroke={edge.modality === "speculative" ? "#8a8478" : "#e7ff4a"}
+            strokeWidth={edge.modality === "speculative" ? 0.008 : 0.014}
+          />
+        );
+      })}
+      {placed.map((node) => (
+        <g key={node.id} onClick={() => onPick(node.id)} className="cursor-pointer">
+          <circle cx={node.x} cy={node.y} r={0.07} fill={colorFor(node.schema)} />
+          <text x={node.x + 0.09} y={node.y + 0.03} fill="#f4f1ea" fontSize="0.09">
+            {node.caption}
+          </text>
+        </g>
+      ))}
+    </svg>
+  );
+}
+
 function LinkChart({ graph, onPick }: { graph: Graph; onPick: (id: string) => void }) {
   const [note, setNote] = useState("Drawing the chart");
+  const [glChart, setGlChart] = useState(true);
 
   useEffect(() => {
     const container = document.getElementById("extract-sigma");
@@ -161,9 +212,21 @@ function LinkChart({ graph, onPick }: { graph: Graph; onPick: (id: string) => vo
             color: edge.modality === "speculative" ? "#8a8478" : "#e7ff4a",
           });
         });
-        sigma = new Sigma(model, container, { allowInvalidContainer: true });
+        sigma = new Sigma(model, container, {
+          allowInvalidContainer: true,
+          itemSizesReference: "screen",
+          stagePadding: 24,
+        });
         sigma.on("clickNode", ({ node }) => onPick(node));
-        setNote(`${graph.nodes.length} entities · ${graph.edges.length} links`);
+        window.setTimeout(() => {
+          const canvas = container.querySelector("canvas");
+          const drawn = canvas instanceof HTMLCanvasElement && canvasInkCount(canvas) >= 8;
+          setGlChart(drawn);
+          setNote(
+            `${graph.nodes.length} entities · ${graph.edges.length} links` +
+              (drawn ? "" : " · layout"),
+          );
+        }, 350);
       } catch (exc) {
         setNote(exc instanceof Error ? exc.message : "The chart did not draw");
       }
@@ -176,7 +239,12 @@ function LinkChart({ graph, onPick }: { graph: Graph; onPick: (id: string) => vo
 
   return (
     <div>
-      <div id="extract-sigma" className="h-80 w-full bg-black" />
+      <div className="relative h-80 bg-black">
+        <div className={glChart ? "hidden" : "absolute inset-0"}>
+          <LayoutChart graph={graph} onPick={onPick} />
+        </div>
+        <div id="extract-sigma" className={glChart ? "absolute inset-0" : "pointer-events-none absolute inset-0 opacity-0"} />
+      </div>
       <p className="mt-2 text-[11px] tracking-widest text-white/45 uppercase">{note}</p>
     </div>
   );

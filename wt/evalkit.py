@@ -132,7 +132,11 @@ def _remember(store: Store, item: Item, vector: list[float]) -> None:
     )
 
 
-def export_kev_jsonl(feedback_path: str | Path, indicators_dir: str | Path) -> list[dict]:
+def export_kev_jsonl(
+    feedback_path: str | Path,
+    indicators_dir: str | Path,
+    indicator_ids: set[str] | None = None,
+) -> list[dict]:
     """Turn thumbs-up/down JSONL into Kev fine-tune rows (noul label on `hit`)."""
     indicators = {ind.id: ind for ind in load_indicators(indicators_dir)}
     rows = []
@@ -143,6 +147,8 @@ def export_kev_jsonl(feedback_path: str | Path, indicators_dir: str | Path) -> l
         if not line.strip():
             continue
         record = json.loads(line)
+        if indicator_ids is not None and record.get("indicator_id") not in indicator_ids:
+            continue
         indicator = indicators.get(record["indicator_id"])
         if indicator is None or "hit" not in indicator.questions:
             continue

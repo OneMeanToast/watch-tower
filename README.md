@@ -29,6 +29,25 @@ wt demo
 
 You should see at least one `[push]` block on stdout, including the LLM-JEPA weight release. Exit code is 0 when a push fired. The demo database is `data/demo.db` and is replaced every run.
 
+## Desk
+
+The desk is the screen for the same pipeline. It is a local site, not a hosted app: one shared wire, and a named desk per person.
+
+```bash
+wt desk
+```
+
+That starts the API on `127.0.0.1:8641` and the browser UI on [http://127.0.0.1:47221](http://127.0.0.1:47221). The first open replays the fixture wire into `data/desk.db` when that database is empty. Replay fixtures replaces it. Pull live feeds uses the real sources and can fail a feed without taking the rest of the page down.
+
+- **Highway.** One lane per indicator. Push, digest, and suppressed items sit on the lane. A clear lane is a quiet road.
+- **Trace.** Ten numbered gates, in the order an article actually moves: source, visible text, spam, dedupe, event, prefilter, injection, decision, cascade, policy. Hit and miss labels are recorded here.
+- **Indicators.** Edit the name, keywords, cosine floor, alert language, and confidence band. The next pull uses the saved YAML.
+- **Digest.** Unread digest-tier matches for the desk you have open. Marking it read moves only that desk's cursor.
+- **Export.** Markdown briefing, CSV, JSON packet, and Kev JSONL. Kev rows come from hit and miss labels, so an unlabeled wire exports an empty file. A desk only offers the formats it has turned on.
+- **Desks.** Weston follows every lane. Research, Policy, and Releases are narrower. Open a new desk for someone else on the machine. An empty lane list means the whole wire. Edits go to `data/desks.yaml` and leave `config/desks.yaml` as the seed.
+
+There is no login. A desk is a local view of one database, so two people on one Mac share the wire and keep their own lanes, digest cursor, and export set.
+
 `wt demo` always starts on the hashing embedder and the lexical decider, even if `WT_EMBEDDER` or `WT_DECIDER` are set. Pass `--decider systemone` or `--embedder qwen` only when you want the demo fixtures scored by a local server or the real embedding model.
 
 ## Mac setup (live mode)
@@ -204,7 +223,7 @@ An item passes the prefilter when its source matches and it is not blocked by `k
 - **GDELT DOC 2.0**, one request every five seconds. The article list returns titles and URLs, not full text, so the stored body starts as the headline. With `WT_FETCH_FULLTEXT=1` and trafilatura installed, a likely hit then fetches the page.
 - **OpenAlex**. Set `WT_OPENALEX_KEY` (free, from [openalex.org/settings/api](https://openalex.org/settings/api)) for the daily free budget. A few keyless calls still work.
 - **Bluesky Jetstream**. Set `bluesky.enabled: true` and install `watch-tower[bluesky]`. Each cycle reads a short window, not a gapless archive. Default endpoint: `wss://jetstream2.us-east.bsky.network/subscribe`. Repeated-text clusters are dropped before classification.
-- **World Monitor feeds** (names and URLs only) live in `config/feeds/worldmonitor.yaml`. They stay off unless `worldmonitor.enabled` is true. See `docs/worldmonitor-ui.md` for what its briefing UI does that a future Watch Tower screen could borrow. No World Monitor code is included.
+- **World Monitor feeds** (names and URLs only) live in `config/feeds/worldmonitor.yaml`. They stay off unless `worldmonitor.enabled` is true. `docs/worldmonitor-ui.md` notes what that briefing does. The desk borrows the idea of one wire and several audiences. No World Monitor code is included.
 - **Mastodon** public hashtag timelines, when `hashtags` is non-empty.
 - **X/Twitter** is a disabled stub. The official API is paid, and this project does not scrape it.
 
@@ -237,10 +256,12 @@ writes Kev fine-tune rows: the item text as `state`, and the indicator's `hit` q
 config/sources.yaml          feeds, arXiv, GDELT, OpenAlex, Bluesky
 config/feeds/worldmonitor.yaml  feed URLs mined as data, off by default
 config/indicators/*.yaml     one indicator per file
-wt/                          ingest, embed, store, prefilter, decider, policy, alert
+config/desks.yaml            seed desks; live edits go to data/desks.yaml
+wt/                          ingest, embed, store, prefilter, decider, policy, alert, desk API
+web/                         the desk UI (Next.js)
 wt/experimental/jepa_head.py optional linear predictor in embedding space
 fixtures/                    offline demo items, canaries, parser samples
-docs/worldmonitor-ui.md      UI notes only; there is no Watch Tower UI
+docs/worldmonitor-ui.md      briefing notes; no World Monitor code
 eval/                        seed labels, eval, Kev export
 ```
 
@@ -261,11 +282,11 @@ Checked on 7 Oct 2026 while building this:
 - **Qwen3-Embedding-0.6B** is the live default when sentence-transformers is installed. Demo mode and machines without the package use a hashing embedder so the pipeline runs with no download. Do not reuse hashing thresholds as if they were Qwen scores.
 - **sqlite-vec** is used through `vec_distance_cosine` on float32 blob columns (the documented non-virtual-table path). `vec0` virtual tables want integer row ids and a frozen dimension, which fights text ids and switching embedders.
 - **Entities** in the YAML are literal phrases. GLiNER is not bundled.
-- **Feedback HTTP** is the standard library, not FastAPI.
+- **Feedback links** in an alert still use the standard-library server (`wt feedback-server`). The desk is a separate FastAPI process plus the Next.js screen.
 - **Scheduler** is a sleep loop (`wt serve`) or cron, not APScheduler.
 - **Bluesky** is a bounded sample per cycle on `jetstream2.us-east.bsky.network`, which is the current public subscribe host. The older path in the research note can be pasted into `endpoint` if you prefer it.
 - **JEPA head** (`wt/experimental/jepa_head.py`) is a small ridge map. It is not on the alert path. There is still no production open text-JEPA embedder; the pipeline does not pretend otherwise.
-- World Monitor's feed inventory is mined as URLs and names only (`config/feeds/worldmonitor.yaml`). Its AGPL code is not copied. `docs/worldmonitor-ui.md` is a short note for a future UI, which this repo does not build.
+- World Monitor's feed inventory is mined as URLs and names only (`config/feeds/worldmonitor.yaml`). Its AGPL code is not copied. The desk is Watch Tower's own screen. `docs/worldmonitor-ui.md` only records what that other briefing does.
 - RSSHub and other AGPL projects mentioned in the research are not copied.
 - Lexical probabilities are **not calibrated**. The fixture eval is a regression check for the heuristic, not a claim about Kev's precision.
 

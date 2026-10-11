@@ -1,6 +1,6 @@
 # World Monitor, as a UI note
 
-World Monitor (`koala73/worldmonitor`, AGPL-3.0) is a situational-awareness dashboard. Watch Tower does not copy its code and does not ship a UI. The feed **names and URLs** are data in `config/feeds/worldmonitor.yaml`, and that catalog is off unless `worldmonitor.enabled` is set.
+World Monitor (`koala73/worldmonitor`, AGPL-3.0) is a situational-awareness dashboard. Watch Tower does not copy its code. The feed **names and URLs** are data in `config/feeds/worldmonitor.yaml`, and that catalog is off unless `worldmonitor.enabled` is set. The desk (`wt desk`) is a separate screen: lanes, a numbered trace, digests, and per-person desks.
 
 What is worth borrowing later, if a UI is built:
 
@@ -11,4 +11,4 @@ What is worth borrowing later, if a UI is built:
 - **Items carry place and severity.** A map and an alert flag sit on the item. The list can filter to "what changed" without re-reading every headline.
 - **Scheduling is not ranking.** Some feeds are fetched earlier on a cold start. That order is not a score and should not be shown as importance.
 
-Watch Tower's equivalent of the briefing today is `wt digest` plus push alerts. A future UI could show the digest by source category, the explanation already stored on each match, and thumbs up/down. It should keep treating article text as untrusted data.
+The desk is that briefing for one machine. Named desks are the audience split (every lane, research, policy, releases, or one you add). The trace shows the explanation already stored on each match, and hit or miss is the thumbs up/down. Article text stays untrusted data.

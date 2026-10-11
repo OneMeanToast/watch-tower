@@ -1,0 +1,23 @@
+# Named views of one shared wire. An empty indicators list means every lane.
+# Edits from the desk are saved to data/desks.yaml and do not rewrite this seed.
+desks:
+  - id: weston
+    name: Weston
+    brief: Every lane. Pushes on the wire and the morning digest.
+    indicators: []
+    exports: [markdown, csv, json, kev]
+  - id: research
+    name: Research
+    brief: Model releases, benchmarks, and decision-model papers.
+    indicators: [ai-open-text-jepa, major-benchmark-sota, jev-like-decision-model]
+    exports: [markdown, kev]
+  - id: policy
+    name: Policy
+    brief: Rules that change what a lab is allowed to ship.
+    indicators: [ai-policy-regulation]
+    exports: [markdown, csv]
+  - id: releases
+    name: Releases
+    brief: Open weights, including JEPA checkpoints.
+    indicators: [open-weight-model-release, ai-open-text-jepa]
+    exports: [json, csv]

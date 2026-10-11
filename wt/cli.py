@@ -61,6 +61,11 @@ def main(argv: list[str] | None = None) -> int:
 
     sub.add_parser("doctor", help="show what this machine will use").set_defaults(func=_cmd_doctor)
 
+    desk = sub.add_parser("desk", help="open the local desk (API plus the browser UI)")
+    desk.add_argument("--port", type=int, default=47221, help="browser port")
+    desk.add_argument("--api-port", type=int, default=8641)
+    desk.set_defaults(func=_cmd_desk)
+
     export = sub.add_parser("export-kev", help="write Kev fine-tune JSONL from feedback")
     export.add_argument("--out", type=Path, default=Path("data/kev-train.jsonl"))
     export.set_defaults(func=_cmd_export)
@@ -185,6 +190,43 @@ def _cmd_digest(args) -> int:
         store.meta_set("digest_cursor", rows[-1]["created_at"])
     finally:
         store.close()
+    return 0
+
+
+def _cmd_desk(args) -> int:
+    import subprocess
+
+    root = project_root()
+    web = root / "web"
+    api = subprocess.Popen(
+        [
+            sys.executable,
+            "-m",
+            "uvicorn",
+            "wt.deskapp:app",
+            "--host",
+            "127.0.0.1",
+            "--port",
+            str(args.api_port),
+        ],
+        cwd=root,
+    )
+    ui = None
+    if (web / "package.json").is_file():
+        ui = subprocess.Popen(
+            ["npm", "run", "dev", "--", "--port", str(args.port), "--hostname", "0.0.0.0"],
+            cwd=web,
+        )
+    print(f"Watch Tower desk  http://127.0.0.1:{args.port}", flush=True)
+    print(f"API               http://127.0.0.1:{args.api_port}", flush=True)
+    try:
+        api.wait()
+    except KeyboardInterrupt:
+        print("\nstopped", flush=True)
+    finally:
+        api.terminate()
+        if ui is not None:
+            ui.terminate()
     return 0
 
 

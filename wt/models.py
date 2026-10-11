@@ -142,6 +142,7 @@ class MatchResult(BaseModel):
     snippets: list[str] = Field(default_factory=list)
     explanation: str = ""
     event_id: str = ""
+    trace: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class CycleReport(BaseModel):

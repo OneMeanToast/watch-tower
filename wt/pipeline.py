@@ -173,6 +173,15 @@ def run_items(
                     reason = "cooldown: near-duplicate of a recent alert"
             snippets = excerpts(item.document(), cand.matched_terms)
             explanation = _explanation(item, cand, decision, event_id)
+            trace = _build_trace(
+                item=item,
+                cand=cand,
+                decision=decision,
+                action=action,
+                reason=reason,
+                verdict=verdict,
+                event_id=event_id,
+            )
             result = MatchResult(
                 match_id=match_id,
                 item_id=item.id,
@@ -192,6 +201,7 @@ def run_items(
                 snippets=snippets,
                 explanation=explanation,
                 event_id=event_id,
+                trace=trace,
             )
             store.save_match(result, decision.answers)
             if action == "push":
@@ -234,6 +244,59 @@ def _visible_item(item: Item) -> Item:
     if title == item.title and text == item.text:
         return item
     return item.model_copy(update={"title": title or item.title, "text": text})
+
+
+def _build_trace(*, item: Item, cand, decision: Decision, action: str, reason: str, verdict, event_id: str) -> list[dict]:
+    """One line per gate, in the order an article actually moves."""
+    terms = ", ".join(cand.matched_terms) if cand.matched_terms else "none"
+    source = item.source + (f" · {item.feed_id}" if item.feed_id else "")
+    if item.groups:
+        source += " · " + ", ".join(item.groups)
+    injection_state = "hold" if verdict.flagged else "pass"
+    injection_detail = verdict.reason if verdict.flagged else f"{verdict.backend} clear"
+    if reason.startswith("uncertain") or reason.startswith("low confidence"):
+        cascade_state, cascade_detail = "hold", reason
+    elif reason.startswith("escalated"):
+        cascade_state, cascade_detail = "pass", reason
+    else:
+        floor = cand.indicator.policy.push_min_confidence
+        cascade_state = "pass"
+        cascade_detail = (
+            f"confidence {decision.confidence:.2f}"
+            + (f" · floor {floor:.2f}" if floor else " · no confidence floor")
+        )
+    policy_state = action if action in {"push", "digest", "drop", "suppressed"} else "hold"
+    return [
+        {"gate": "Source", "state": "pass", "detail": source},
+        {
+            "gate": "Visible text",
+            "state": "pass",
+            "detail": "Hidden and invisible text stripped before any score",
+        },
+        {
+            "gate": "Spam",
+            "state": "pass",
+            "detail": "Kept. Repeated Bluesky text is dropped before this gate",
+        },
+        {"gate": "Dedupe", "state": "pass", "detail": "New item. Exact copies never reach a lane"},
+        {"gate": "Event", "state": "pass", "detail": f"event {event_id}"},
+        {
+            "gate": "Prefilter",
+            "state": "pass",
+            "detail": f"cosine {cand.cosine:.2f} · keywords {terms}",
+        },
+        {"gate": "Injection", "state": injection_state, "detail": injection_detail},
+        {
+            "gate": "Decision",
+            "state": "hold" if verdict.flagged else "pass",
+            "detail": (
+                f"p_hit {decision.p_hit:.2f} · severity {decision.severity:.2f} · "
+                f"confidence {decision.confidence:.2f} · {decision.backend}"
+            ),
+        },
+        {"gate": "Cascade", "state": cascade_state, "detail": cascade_detail},
+        {"gate": "Policy", "state": policy_state, "detail": reason},
+    ]
 
 
 def _explanation(item: Item, cand, decision: Decision, event_id: str) -> str:

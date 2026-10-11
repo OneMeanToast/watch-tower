@@ -66,6 +66,7 @@ CREATE TABLE IF NOT EXISTS matches (
   answers_json TEXT NOT NULL DEFAULT '{}',
   explanation TEXT NOT NULL DEFAULT '',
   snippets_json TEXT NOT NULL DEFAULT '[]',
+  trace_json TEXT NOT NULL DEFAULT '[]',
   created_at TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS alerts (
@@ -145,6 +146,10 @@ class Store:
         if "snippets_json" not in match_cols:
             self.conn.execute(
                 "ALTER TABLE matches ADD COLUMN snippets_json TEXT NOT NULL DEFAULT '[]'"
+            )
+        if "trace_json" not in match_cols:
+            self.conn.execute(
+                "ALTER TABLE matches ADD COLUMN trace_json TEXT NOT NULL DEFAULT '[]'"
             )
 
     def close(self) -> None:
@@ -347,8 +352,8 @@ class Store:
             INSERT INTO matches (
               id, item_id, indicator_id, cosine, keyword_hit, p_hit, severity,
               category, confidence, action, reason, backend, answers_json,
-              explanation, snippets_json, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              explanation, snippets_json, trace_json, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(id) DO UPDATE SET
               cosine = excluded.cosine,
               keyword_hit = excluded.keyword_hit,
@@ -362,6 +367,7 @@ class Store:
               answers_json = excluded.answers_json,
               explanation = excluded.explanation,
               snippets_json = excluded.snippets_json,
+              trace_json = excluded.trace_json,
               created_at = excluded.created_at
             """,
             (
@@ -380,6 +386,7 @@ class Store:
                 json.dumps(answers),
                 result.explanation,
                 json.dumps(result.snippets),
+                json.dumps(result.trace),
                 utcnow().isoformat(),
             ),
         )
@@ -436,6 +443,21 @@ class Store:
                 }
             )
         return found
+
+    def list_matches(self, *, action: str | None = None, limit: int = 300) -> list[sqlite3.Row]:
+        sql = """
+            SELECT m.*, i.title AS item_title, i.url AS item_url, i.source AS item_source,
+                   i.feed_id AS item_feed, i.text AS item_text, i.event_id AS item_event
+            FROM matches m
+            JOIN items i ON i.id = m.item_id
+        """
+        params: list = []
+        if action:
+            sql += " WHERE m.action = ?"
+            params.append(action)
+        sql += " ORDER BY m.created_at DESC LIMIT ?"
+        params.append(limit)
+        return self.conn.execute(sql, params).fetchall()
 
     def has_push(self, match_id: str) -> bool:
         row = self.conn.execute(

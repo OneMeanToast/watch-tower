@@ -128,6 +128,28 @@ class ModelProposer(Proposer):
         )
 
 
+def union_proposals(text: str, base: Proposal, extra: Proposal, ontology: Ontology) -> Proposal:
+    """Add grounded spans from a second proposer. Overlaps stay with the first."""
+    mentions = list(base.mentions)
+    occupied = [(row.start, row.end) for row in mentions]
+    for mention in extra.mentions:
+        if mention.start < 0 or mention.end > len(text) or mention.start >= mention.end:
+            continue
+        if text[mention.start : mention.end] != mention.surface:
+            continue
+        if any(not (mention.end <= left or mention.start >= right) for left, right in occupied):
+            continue
+        mentions.append(mention)
+        occupied.append((mention.start, mention.end))
+    mentions.sort(key=lambda row: (row.start, row.end))
+    return Proposal(
+        mentions=mentions,
+        relations=_relations(text, mentions),
+        events=_events(text, mentions, ontology),
+        clusters=_clusters(mentions),
+    )
+
+
 def build_proposer(kind: str = "stub", ontology: Ontology | None = None) -> Proposer:
     requested = (kind or "stub").strip().lower()
     if requested == "stub":

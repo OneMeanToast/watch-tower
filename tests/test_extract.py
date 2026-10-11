@@ -362,6 +362,98 @@ def test_accept_writes_a_label_and_board_highlights():
     assert status == "accepted"
 
 
+def test_tier_a_needs_a_strong_hit():
+    store = Store(":memory:")
+    rule = _cap(5)
+    weak = _item(id="policy-weak", source="rss", groups=["ai-policy"])
+    strong = _item(id="policy-strong", source="rss", groups=["ai-policy"])
+    assert note_high_value(store, weak, p_hit=0.84, ontology=rule) is None
+    assert note_high_value(store, strong, p_hit=0.85, ontology=rule)
+    reason = store.conn.execute("SELECT reason FROM extract_jobs WHERE item_id = ?", ("policy-strong",)).fetchone()
+    assert "tier_a" in reason["reason"]
+
+
+def test_deep_mode_keeps_only_grounded_spans():
+    from wt.extract_graph.deep import LangExtractProposer, build_deep_proposer
+
+    class Interval:
+        def __init__(self, start, end):
+            self.start_pos = start
+            self.end_pos = end
+
+    class Row:
+        def __init__(self, text, cls, interval):
+            self.extraction_text = text
+            self.extraction_class = cls
+            self.char_interval = interval
+
+    class Result:
+        def __init__(self, rows):
+            self.extractions = rows
+
+    text = FIXTURE_TEXT
+    cisa = text.index("CISA")
+    llama = text.index("Llama")
+    license_at = text.index("open license")
+
+    def extract(_text):
+        return Result(
+            [
+                Row("CISA", "PublicBody", Interval(cisa, cisa + len("CISA"))),
+                Row("open license", "Regulation", Interval(license_at, license_at + len("open license"))),
+                Row("invented lab", "Organization", None),
+                Row("not in the text", "Organization", Interval(llama, llama + len("Llama"))),
+                Row("Llama", "NotAType", Interval(llama, llama + len("Llama"))),
+            ]
+        )
+
+    off = build_deep_proposer(False)
+    assert off.name == "off"
+    assert off.propose(text).mentions == []
+    deep = LangExtractProposer(extract=extract)
+    proposal = deep.propose(text)
+    assert [(row.surface, row.type) for row in proposal.mentions] == [
+        ("CISA", "PublicBody"),
+        ("open license", "Regulation"),
+    ]
+    store = Store(":memory:")
+    extract_text(
+        store,
+        doc_id="deep-1",
+        title="deep",
+        text=text,
+        local_only=True,
+        proposer=build_proposer("stub"),
+        deep=deep,
+    )
+    surfaces = {row["surface"] for row in store.conn.execute("SELECT surface FROM extract_mentions")}
+    assert "CISA" in surfaces
+    assert "open license" in surfaces
+    assert "invented lab" not in surfaces
+    assert "not in the text" not in surfaces
+
+
+def test_ladybug_projection_matches_sqlite(tmp_path):
+    import ladybug  # noqa: F401
+
+    from wt.extract_graph.graph import load_graph
+
+    store = Store(tmp_path / "tower.db")
+    seed_fixture(store)
+    first = load_graph(store)
+    second = load_graph(store)
+    assert first["backend"] == "ladybug"
+    assert second["backend"] == "ladybug"
+    captions = {row["caption"] for row in first["nodes"]}
+    assert "Llama" in captions
+    assert "ExampleSoft Gateway" in captions
+    kinds = {row["type"] for row in first["edges"]}
+    assert "affects" in kinds
+    memory = Store(":memory:")
+    seed_fixture(memory)
+    assert load_graph(memory)["backend"] == "sqlite"
+
+
 def test_verify_keeps_local_candidates_when_ask_fails():
     proposal = StubProposer().propose(FIXTURE_TEXT)
 

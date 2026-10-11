@@ -5,7 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from wt.extract_graph.graph import SqliteGraphView
+from wt.extract_graph.graph import load_graph
 from wt.extract_graph.ontology import default_ontology
 from wt.extract_graph.queue import note_high_value
 from wt.extract_graph.run import FIXTURE_ID, apply_action, seed_fixture, undo_merge
@@ -37,7 +37,7 @@ def build_board(store, doc_id: str | None = None) -> dict:
         chosen = FIXTURE_ID if any(row["id"] == FIXTURE_ID for row in docs) else (docs[0]["id"] if docs else "")
     document = next((row for row in docs if row["id"] == chosen), None)
     mentions = _mentions(store, chosen)
-    graph = SqliteGraphView(store.conn).snapshot()
+    graph = load_graph(store)
     return {
         "document": document,
         "documents": [{"id": row["id"], "title": row["title"], "kind": row["kind"]} for row in docs],

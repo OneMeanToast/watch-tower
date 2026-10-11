@@ -23,9 +23,19 @@ class TypeSpec:
 @dataclass
 class HighValueRule:
     daily_cap: int = 50
-    when: tuple[str, ...] = ("pushed_alert", "starred", "ripped", "paper", "advisory")
+    when: tuple[str, ...] = (
+        "pushed_alert",
+        "starred",
+        "ripped",
+        "paper",
+        "advisory",
+        "tier_a",
+    )
     paper_sources: tuple[str, ...] = ("arxiv", "openalex")
     advisory_sources: tuple[str, ...] = ("cisa_kev", "nvd")
+    tier_a_sources: tuple[str, ...] = ("arxiv", "openalex", "cisa_kev", "nvd", "federal_register", "hf_hub")
+    tier_a_groups: tuple[str, ...] = ("ai-policy",)
+    tier_a_min_p: float = 0.85
 
 
 @dataclass
@@ -69,9 +79,18 @@ def load_ontology(path: Path | None = None) -> Ontology:
         ],
         high_value=HighValueRule(
             daily_cap=int(rule.get("daily_cap") or 50),
-            when=tuple(rule.get("when") or ["pushed_alert", "starred", "ripped", "paper", "advisory"]),
+            when=tuple(
+                rule.get("when")
+                or ["pushed_alert", "starred", "ripped", "paper", "advisory", "tier_a"]
+            ),
             paper_sources=tuple(rule.get("paper_sources") or ["arxiv", "openalex"]),
             advisory_sources=tuple(rule.get("advisory_sources") or ["cisa_kev", "nvd"]),
+            tier_a_sources=tuple(
+                rule.get("tier_a_sources")
+                or ["arxiv", "openalex", "cisa_kev", "nvd", "federal_register", "hf_hub"]
+            ),
+            tier_a_groups=tuple(rule.get("tier_a_groups") or ["ai-policy"]),
+            tier_a_min_p=float(rule.get("tier_a_min_p") if rule.get("tier_a_min_p") is not None else 0.85),
         ),
     )
 

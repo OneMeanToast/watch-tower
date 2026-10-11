@@ -116,6 +116,9 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser(
         "extract-eval", help="score the stub proposer on eval/extraction_gold.json"
     ).set_defaults(func=_cmd_extract_eval)
+    sub.add_parser("graph-rebuild", help="rebuild the LadybugDB projection from SQLite").set_defaults(
+        func=_cmd_graph
+    )
 
     args = parser.parse_args(argv)
     logging.basicConfig(
@@ -468,6 +471,12 @@ def _cmd_doctor(args) -> int:
         f"jev price: ${settings.jev_usd_per_mtok}/MTok input, output free; "
         f"monthly cap ${settings.jev_monthly_usd:g}; daily warning ${settings.jev_daily_warn_usd:g}"
     )
+    print(
+        "default run: Jev at api.typesafe.ai when JEV_API_KEY is set, otherwise lexical. "
+        "Kev is not contacted unless WT_DECIDER=kev or WT_LOCAL_DECIDER=kev."
+    )
+    print(f"local decider: {settings.local_decider}")
+    print(f"deep extract: {'on ' + settings.ollama_model if settings.deep_extract else 'off'}")
     print("kev release: 1.0 checkpoints kev-0.8b, kev-4b, kev-9b, kev-27b (pin @v1.0)")
     print("kev server: python -m kev.serve uses MLX on Apple Silicon; set KEV_DATE_FACTS=1")
     print("kev size: kev-0.8b@v1.0 on any Apple Silicon Mac; kev-4b@v1.0 wants 32 GB")
@@ -542,16 +551,36 @@ def _cmd_extract(args) -> int:
             prompt_version=settings.jev_prompt_version,
             allow_private=settings.jev_allow_private,
         ).ask
+    from wt.extract_graph.deep import build_deep_proposer
     from wt.extract_graph.propose import build_proposer
     from wt.extract_graph.queue import drain
 
+    deep = build_deep_proposer(
+        settings.deep_extract,
+        model_id=settings.ollama_model,
+        model_url=settings.ollama_url,
+    )
     done = drain(
         store,
         ask=ask,
         proposer=build_proposer(settings.extractor),
+        deep=deep,
         limit=max(1, args.limit),
     )
     print(f"extracted {done}")
+    store.close()
+    return 0
+
+
+def _cmd_graph(_args) -> int:
+    from wt.extract_graph.graph import load_graph
+
+    settings = Settings.from_env()
+    store = Store(settings.db_path)
+    snap = load_graph(store)
+    print(
+        f"backend={snap.get('backend')} nodes={len(snap['nodes'])} edges={len(snap['edges'])}"
+    )
     store.close()
     return 0
 

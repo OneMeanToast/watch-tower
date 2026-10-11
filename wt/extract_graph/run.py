@@ -8,7 +8,7 @@ from datetime import datetime
 from wt.extract_graph.ground import normalise_dates
 from wt.extract_graph.link import EntityLinker, StubLinker
 from wt.extract_graph.ontology import Ontology, default_ontology
-from wt.extract_graph.propose import Proposal, Proposer, StubProposer, build_proposer
+from wt.extract_graph.propose import Proposal, Proposer, StubProposer, build_proposer, union_proposals
 from wt.extract_graph.resolve import SuffixResolver
 from wt.extract_graph.verify import dump_answers, verify_proposal
 from wt.text import sha256_text, utcnow
@@ -37,10 +37,13 @@ def extract_text(
     ask=None,
     ontology: Ontology | None = None,
     linker: EntityLinker | None = None,
+    deep: Proposer | None = None,
 ) -> str:
     ontology = ontology or default_ontology()
     proposer = proposer or StubProposer(ontology)
     proposal = proposer.propose(text)
+    if deep is not None and getattr(deep, "name", "off") != "off":
+        proposal = union_proposals(text, proposal, deep.propose(text), ontology)
     model_version = ""
     if ask is not None and not local_only:
         proposal, model_version = verify_proposal(text, proposal, ask, ontology)

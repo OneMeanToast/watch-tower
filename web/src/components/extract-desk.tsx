@@ -33,6 +33,7 @@ type Entity = { id: string; schema: string; caption: string; wikidata_qid?: stri
 type Graph = {
   nodes: { id: string; schema: string; caption: string }[];
   edges: { id: string; source: string; target: string; type: string; modality: string }[];
+  backend?: string;
 };
 
 type Board = {
@@ -418,7 +419,9 @@ export function ExtractDesk() {
               </div>
             </article>
             <article className="border border-white/15 p-4">
-              <h3 className="text-[11px] tracking-[0.28em] text-white/50 uppercase">Link chart</h3>
+              <h3 className="text-[11px] tracking-[0.28em] text-white/50 uppercase">
+                Link chart · {board.graph.backend === "ladybug" ? "LadybugDB" : "SQLite"}
+              </h3>
               {board.graph.nodes.length === 0 ? (
                 <p className="mt-3 text-sm text-white/60">No entities to draw.</p>
               ) : (

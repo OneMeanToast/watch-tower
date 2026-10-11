@@ -359,7 +359,7 @@ def test_auto_with_a_key_does_not_probe_the_official_host(monkeypatch, tmp_path)
         store=Store(tmp_path / "auto.db"),
     )
     assert decider.name == "jev"
-    assert seen == ["http://127.0.0.1:8009"]
+    assert seen == []
     bare = build_decider(
         "jev",
         decider_url="http://127.0.0.1:8009",
@@ -371,6 +371,43 @@ def test_auto_with_a_key_does_not_probe_the_official_host(monkeypatch, tmp_path)
         jev_api_key=None,
     )
     assert bare.name == "lexical"
+
+
+def test_auto_without_a_key_stays_lexical_and_skips_kev(monkeypatch):
+    seen = []
+
+    def probe(url, timeout=2.0, api_key=None, transport=None):
+        seen.append(url)
+        return True
+
+    monkeypatch.setattr("wt.decider.probe_systemone", probe)
+    monkeypatch.setattr("wt.decider.probe_ollama", lambda *args, **kwargs: True)
+    decider = build_decider(
+        "auto",
+        decider_url="http://127.0.0.1:8009",
+        decider_model="kev-latest",
+        api_key=None,
+        ollama_url="http://127.0.0.1:11434",
+        ollama_model="qwen",
+        fallback=True,
+        jev_api_key=None,
+    )
+    assert decider.name == "lexical"
+    assert seen == []
+    opted = build_decider(
+        "jev",
+        decider_url="http://127.0.0.1:8009",
+        decider_model="kev-latest",
+        api_key=None,
+        ollama_url="http://127.0.0.1:11434",
+        ollama_model="qwen",
+        fallback=True,
+        jev_api_key="secret",
+        local_decider="kev",
+        store=Store(":memory:"),
+    )
+    assert opted.name == "jev"
+    assert seen == ["http://127.0.0.1:8009"]
 
 
 def test_manual_upload_and_paste_stay_local():

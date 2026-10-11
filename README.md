@@ -317,7 +317,13 @@ Keyless sources: CISA KEV, NVD 2.0, the Hugging Face Hub models API, and the Fed
 
 `wt extract-eval` scores exact span and type matches against `eval/extraction_gold.json`.
 
-Not in this build, pending a later decision: LadybugDB, a local-LLM deep mode, Telegram, ACLED, and ReliefWeb.
+Weston signed off the open decisions. The default run sends public items to Jev at `https://api.typesafe.ai`, model `jev-1.13.0`, with a `$10` monthly hard cap and a `$1` daily warning. With no key, the run stays lexical. Kev is not probed. Set `WT_DECIDER=kev` to use it as the classifier, or `WT_LOCAL_DECIDER=kev` so local-only items and Jev outages use the local server. Manual uploads and private files stay `local_only`. A public URL rip may go to Jev.
+
+`WT_DEEP_EXTRACT=1` turns on a second proposer: LangExtract (`pip install -e ".[deep]"`) against the local Ollama model in `WT_OLLAMA_MODEL`. It is off by default. Spans with no character interval, or whose text is not the source substring, are dropped. No cloud generative model is called.
+
+The link chart reads a LadybugDB file rebuilt from SQLite (`pip install -e ".[graph]"`, MIT). `wt graph-rebuild` refreshes it. If Ladybug is not installed, the same chart is queried from SQLite. The ontology in `config/ontology.yaml` is the FollowTheMoney core, the STIX 2.1 cyber profile, the 20 CAMEO roots, and the AI types. High-value now also includes a top-tier source whose hit probability is at least `0.85`, still capped at 50 extractions a day.
+
+The desk stays on `127.0.0.1` for one person, English first. ACLED and Telegram are not ingested. ReliefWeb is not wired. Licences in the app stay permissive: no AGPL, no GPL in-process, and no non-commercial models.
 
 ## Layout
 

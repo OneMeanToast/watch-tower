@@ -5,16 +5,18 @@ Backends:
   kev         local Kev 1.0, POST /v1/systemone (alias: systemone)
   ollama      local chat model forced to return JSON
   lexical     always available, offline, heuristic probabilities
-  auto        Jev when a key is set, else probe local Kev, then Ollama, else lexical
+  auto        Jev when a key is set, otherwise lexical. Kev is not probed.
 
 Kev's own server already runs on MLX on Apple Silicon
-(`python -m kev.serve --run jaredpalmer/kev-4b@v1.0`). Third-party MLX
+(`python -m kev.serve --run jaredpalmer/kev-4b@v1.0`). It is the offline
+classifier when WT_DECIDER=kev, and the local-only / Jev-down fallback when
+WT_LOCAL_DECIDER=kev. The default run does not contact it. Third-party MLX
 wrappers that score generic Qwen chat models are not wired in. Jev is the
 official TypeSafe HTTP API, not a reseller host.
 
-Fallback order when Jev is selected: Jev, then local Kev if it answers,
-then lexical. A monthly budget cap and local-only items skip Jev and use
-that same local chain. State sent to a model is the spotlight fence.
+Public items go to Jev. Manual uploads and private files stay on the local
+decider. A monthly cap and a spent budget do the same. State sent to a
+model is the spotlight fence.
 """
 
 from __future__ import annotations
@@ -494,6 +496,7 @@ def build_decider(
     daily_warn_usd: float = 1.0,
     prompt_version: str = "1",
     allow_private: bool = False,
+    local_decider: str = "lexical",
     transport: httpx.BaseTransport | None = None,
     sleep=None,
 ) -> Decider:
@@ -505,14 +508,8 @@ def build_decider(
         if jev_api_key:
             kind = "jev"
             log.info("decider auto: JEV_API_KEY is set, using jev")
-        elif probe_systemone(decider_url, api_key=api_key):
-            kind = "kev"
-            log.info("decider auto: using local kev at %s", decider_url)
-        elif probe_ollama(ollama_url):
-            kind = "ollama"
-            log.info("decider auto: using ollama at %s", ollama_url)
         else:
-            log.info("decider auto: no server reachable, using lexical")
+            log.info("decider auto: no JEV_API_KEY, using lexical")
             return lexical
     if kind == "jev":
         from wt.jev import JevDecider
@@ -522,6 +519,7 @@ def build_decider(
             decider_model=decider_model,
             api_key=api_key,
             lexical=lexical,
+            local_decider=local_decider,
         )
         if not jev_api_key:
             log.warning("WT_DECIDER=jev but JEV_API_KEY is unset; using the local decider")
@@ -558,8 +556,17 @@ def build_decider(
     return primary
 
 
-def _local_chain(*, decider_url: str, decider_model: str, api_key: str | None, lexical: LexicalDecider) -> Decider:
-    """Kev when the local server answers, otherwise lexical. Probed once per cycle."""
+def _local_chain(
+    *,
+    decider_url: str,
+    decider_model: str,
+    api_key: str | None,
+    lexical: LexicalDecider,
+    local_decider: str = "lexical",
+) -> Decider:
+    """Lexical unless WT_LOCAL_DECIDER=kev and that server answers."""
+    if (local_decider or "lexical").strip().lower() != "kev":
+        return lexical
     if probe_systemone(decider_url, api_key=api_key):
         kev = SystemOneDecider(decider_url, model=decider_model, api_key=api_key)
         kev.name = "kev"

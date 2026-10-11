@@ -34,11 +34,11 @@ from wt.text import clean_text, sha256_text, utcnow
 log = logging.getLogger("wt.pipeline")
 
 
-def _note_extract(store, item, *, pushed: bool) -> None:
+def _note_extract(store, item, *, pushed: bool, p_hit: float = 0.0) -> None:
     try:
         from wt.extract_graph.queue import note_high_value
 
-        note_high_value(store, item, pushed=pushed)
+        note_high_value(store, item, pushed=pushed, p_hit=p_hit)
     except Exception:
         log.exception("extract enqueue failed for %s", getattr(item, "id", ""))
 
@@ -144,6 +144,7 @@ def run_items(
         daily_warn_usd=settings.jev_daily_warn_usd,
         prompt_version=settings.jev_prompt_version,
         allow_private=settings.jev_allow_private,
+        local_decider=settings.local_decider,
     )
     index_indicators(store, embedder, indicators)
     visible = [_visible_item(item) for item in items]
@@ -158,9 +159,10 @@ def run_items(
         }
         candidates = select_candidates(item, indicators, cosines, top_k=settings.top_k)
         if not candidates:
-            _note_extract(store, item, pushed=False)
+            _note_extract(store, item, pushed=False, p_hit=0.0)
             continue
         item_pushed = False
+        item_p = 0.0
         enriched = enrich_item(item, enabled=settings.fetch_fulltext)
         if enriched.text != item.text:
             store.update_item_text(item.id, enriched.text)
@@ -255,6 +257,7 @@ def run_items(
                 trace=trace,
             )
             store.save_match(result, decision.answers)
+            item_p = max(item_p, float(decision.p_hit or 0))
             if action == "push":
                 item_pushed = True
                 channels = usable_channels(
@@ -277,7 +280,7 @@ def run_items(
                     echo=True,
                 )
             results.append(result)
-        _note_extract(store, item, pushed=item_pushed)
+        _note_extract(store, item, pushed=item_pushed, p_hit=item_p)
     backends = sorted({row.backend for row in results}) or [decider.name]
     return CycleReport(
         items_seen=len(items),

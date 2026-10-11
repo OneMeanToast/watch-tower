@@ -21,6 +21,7 @@ def note_high_value(
     pushed: bool = False,
     starred: bool = False,
     ripped: bool | None = None,
+    p_hit: float = 0.0,
     ontology: Ontology | None = None,
 ) -> str | None:
     """Enqueue one extraction. A queue error must not fail an alert."""
@@ -31,6 +32,7 @@ def note_high_value(
             pushed=pushed,
             starred=starred,
             ripped=ripped,
+            p_hit=p_hit,
             ontology=ontology or default_ontology(),
         )
     except Exception:
@@ -38,7 +40,16 @@ def note_high_value(
         return None
 
 
-def _enqueue(store, item, *, pushed: bool, starred: bool, ripped: bool | None, ontology: Ontology) -> str | None:
+def _enqueue(
+    store,
+    item,
+    *,
+    pushed: bool,
+    starred: bool,
+    ripped: bool | None,
+    p_hit: float,
+    ontology: Ontology,
+) -> str | None:
     rule = ontology.high_value
     reasons: list[str] = []
     if pushed and "pushed_alert" in rule.when:
@@ -53,6 +64,10 @@ def _enqueue(store, item, *, pushed: bool, starred: bool, ripped: bool | None, o
         reasons.append("paper")
     if source in rule.advisory_sources and "advisory" in rule.when:
         reasons.append("advisory")
+    if "tier_a" in rule.when and float(p_hit or 0) >= float(rule.tier_a_min_p):
+        groups = _field(item, "groups", []) or []
+        if source in rule.tier_a_sources or any(str(group) in rule.tier_a_groups for group in groups):
+            reasons.append("tier_a")
     if not reasons:
         return None
     item_id = str(_field(item, "id", ""))
@@ -100,7 +115,7 @@ def _enqueue(store, item, *, pushed: bool, starred: bool, ripped: bool | None, o
     return job_id
 
 
-def run_once(store, *, ask=None, proposer=None) -> str | None:
+def run_once(store, *, ask=None, proposer=None, deep=None) -> str | None:
     """Run the oldest queued job. Returns the document id, or None when idle."""
     now = utcnow().isoformat()
     job = store.conn.execute(
@@ -120,7 +135,7 @@ def run_once(store, *, ask=None, proposer=None) -> str | None:
     )
     store.conn.commit()
     try:
-        doc_id = _run_job(store, job, ask=ask, proposer=proposer)
+        doc_id = _run_job(store, job, ask=ask, proposer=proposer, deep=deep)
     except Exception as exc:
         store.conn.execute(
             "UPDATE extract_jobs SET state = 'error', error = ? WHERE id = ?",
@@ -137,16 +152,16 @@ def run_once(store, *, ask=None, proposer=None) -> str | None:
     return doc_id
 
 
-def drain(store, *, ask=None, proposer=None, limit: int = 20) -> int:
+def drain(store, *, ask=None, proposer=None, deep=None, limit: int = 20) -> int:
     done = 0
     for _ in range(limit):
-        if run_once(store, ask=ask, proposer=proposer) is None:
+        if run_once(store, ask=ask, proposer=proposer, deep=deep) is None:
             break
         done += 1
     return done
 
 
-def _run_job(store, job, *, ask, proposer) -> str:
+def _run_job(store, job, *, ask, proposer, deep=None) -> str:
     item = store.get_item(job["item_id"])
     if item is None:
         raise RuntimeError(f"item {job['item_id']} is not in the store")
@@ -162,6 +177,7 @@ def _run_job(store, job, *, ask, proposer) -> str:
         item_id=item["id"],
         proposer=proposer,
         ask=None if local_only else ask,
+        deep=deep,
     )
 
 

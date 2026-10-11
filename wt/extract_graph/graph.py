@@ -1,12 +1,16 @@
-"""Read-only projection of the SQLite assertions.
+"""SQLite is the source of truth. LadybugDB is a rebuildable Cypher projection.
 
-A later graph store (Ladybug or otherwise) can implement the same GraphView.
-Nothing here opens a second database.
+The desk reads Ladybug when the package is installed and the store is a file.
+Otherwise it reads the same edges from SQLite.
 """
 
 from __future__ import annotations
 
+import logging
+from pathlib import Path
 from typing import Protocol
+
+log = logging.getLogger("wt.extract_graph.graph")
 
 
 class GraphView(Protocol):
@@ -90,7 +94,91 @@ class SqliteGraphView:
                     "modality": "event",
                 }
             )
-        return {"nodes": nodes, "edges": edges}
+        return {"nodes": nodes, "edges": edges, "backend": "sqlite"}
+
+
+class LadybugGraphView:
+    """Embedded Cypher projection. Rebuilt from SQLite on each read."""
+
+    def __init__(self, path: Path):
+        import ladybug as lb
+
+        self.path = path
+        self._lb = lb
+        path.parent.mkdir(parents=True, exist_ok=True)
+        self.db = lb.Database(str(path))
+        self.conn = lb.Connection(self.db)
+
+    def rebuild(self, sqlite_conn) -> None:
+        snap = SqliteGraphView(sqlite_conn).snapshot()
+        self.conn.execute(
+            "CREATE NODE TABLE IF NOT EXISTS Entity(id STRING PRIMARY KEY, schema STRING, caption STRING)"
+        )
+        self.conn.execute(
+            "CREATE REL TABLE IF NOT EXISTS LINK(FROM Entity TO Entity, kind STRING, modality STRING)"
+        )
+        self.conn.execute("MATCH (a:Entity) DETACH DELETE a")
+        for node in snap["nodes"]:
+            self.conn.execute(
+                "CREATE (e:Entity {id: $id, schema: $schema, caption: $caption})",
+                {"id": node["id"], "schema": node["schema"], "caption": node["caption"]},
+            )
+        for edge in snap["edges"]:
+            self.conn.execute(
+                """
+                MATCH (a:Entity {id: $source}), (b:Entity {id: $target})
+                CREATE (a)-[:LINK {kind: $kind, modality: $modality}]->(b)
+                """,
+                {
+                    "source": edge["source"],
+                    "target": edge["target"],
+                    "kind": edge["type"],
+                    "modality": edge["modality"],
+                },
+            )
+
+    def snapshot(self) -> dict:
+        nodes = []
+        for row in self.conn.execute("MATCH (a:Entity) RETURN a.id, a.caption, a.schema"):
+            nodes.append({"id": row[0], "caption": row[1], "schema": row[2], "wikidata_qid": None})
+        edges = []
+        query = (
+            "MATCH (a:Entity)-[r:LINK]->(b:Entity) "
+            "RETURN a.id, b.id, r.kind, r.modality"
+        )
+        for index, row in enumerate(self.conn.execute(query)):
+            edges.append(
+                {
+                    "id": f"lb-{index}",
+                    "source": row[0],
+                    "target": row[1],
+                    "type": row[2],
+                    "modality": row[3],
+                }
+            )
+        nodes.sort(key=lambda row: row["caption"] or "")
+        return {"nodes": nodes, "edges": edges, "backend": "ladybug"}
+
+
+def graph_path_for(store) -> Path | None:
+    path = getattr(store, "path", None)
+    if path is None or str(path) == ":memory:":
+        return None
+    return Path(str(path) + ".lbdb")
+
+
+def load_graph(store) -> dict:
+    """Prefer the Ladybug projection. Fall back to SQLite queries."""
+    path = graph_path_for(store)
+    if path is None:
+        return SqliteGraphView(store.conn).snapshot()
+    try:
+        view = LadybugGraphView(path)
+        view.rebuild(store.conn)
+        return view.snapshot()
+    except Exception as exc:
+        log.info("ladybug graph unavailable (%s); reading SQLite", exc)
+        return SqliteGraphView(store.conn).snapshot()
 
 
 def _resolve(conn, entity_id: str | None) -> str:

@@ -1,6 +1,6 @@
-# Forensic types. SQLite is the source of truth. This file is the swap point
-# for the ontology: FollowTheMoney-compatible core, plus cyber and AI types.
-# LadybugDB, a local LLM, and the final schema are not wired here.
+# Signed-off ontology. SQLite stores the assertions. LadybugDB is only a
+# projection. English types: a FollowTheMoney-compatible core, a STIX 2.1
+# cyber profile, CAMEO root events, and AI-specific types.
 
 version: 1
 
@@ -12,8 +12,13 @@ high_value:
     - ripped
     - paper
     - advisory
+    - tier_a
   paper_sources: [arxiv, openalex]
   advisory_sources: [cisa_kev, nvd]
+  # Top tier still needs a strong hit. Papers and advisories enqueue without it.
+  tier_a_sources: [arxiv, openalex, cisa_kev, nvd, federal_register, hf_hub]
+  tier_a_groups: [ai-policy]
+  tier_a_min_p: 0.85
 
 # Longest surface wins. The stub proposer uses this list. The model proposer does not.
 stub_gazetteer:
@@ -46,6 +51,7 @@ entity_types:
   - {id: Infrastructure, group: cyber, stix: infrastructure}
   - {id: Location, group: cyber, stix: location}
   - {id: Report, group: cyber, stix: report}
+  - {id: Identity, group: cyber, stix: identity}
   - {id: AIModel, group: ai}
   - {id: Dataset, group: ai}
   - {id: Benchmark, group: ai}

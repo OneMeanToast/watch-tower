@@ -75,6 +75,8 @@ class Settings:
     jev_prompt_version: str = "1"
     jev_allow_private: bool = False
     extractor: str = "stub"
+    local_decider: str = "lexical"
+    deep_extract: bool = False
 
     @classmethod
     def from_env(cls, root: Path | None = None) -> Settings:
@@ -120,6 +122,8 @@ class Settings:
             jev_allow_private=os.environ.get("WT_JEV_ALLOW_PRIVATE", "0")
             not in {"0", "false", "no", ""},
             extractor=os.environ.get("WT_EXTRACTOR", "stub").strip().lower() or "stub",
+            local_decider=os.environ.get("WT_LOCAL_DECIDER", "lexical").strip().lower() or "lexical",
+            deep_extract=os.environ.get("WT_DEEP_EXTRACT", "0") not in {"0", "false", "no", ""},
         )
 
     @classmethod

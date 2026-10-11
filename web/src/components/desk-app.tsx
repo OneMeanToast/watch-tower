@@ -3,11 +3,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { CatalogView } from "@/components/catalog-view";
+import { SpendView } from "@/components/spend-view";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
-type View = "highway" | "catalog" | "indicators" | "trace" | "digest" | "export" | "desks";
+type View = "highway" | "catalog" | "indicators" | "trace" | "digest" | "export" | "desks" | "spend";
 
 type Gate = { gate: string; state: string; detail: string };
 
@@ -81,6 +82,7 @@ const VIEWS: { id: View; label: string }[] = [
   { id: "digest", label: "Digest" },
   { id: "export", label: "Export" },
   { id: "desks", label: "Desks" },
+  { id: "spend", label: "Spend" },
 ];
 
 const EXPORTS = ["markdown", "csv", "json", "kev", "opml", "tether"] as const;
@@ -374,6 +376,7 @@ export function DeskApp() {
         {view === "desks" && (
           <Desks desks={desks} indicators={indicators} activeId={desk?.id} onSaved={chooseDesk} />
         )}
+        {view === "spend" && <SpendView />}
       </main>
     </div>
   );

@@ -270,6 +270,7 @@ def _verdict(raw_html: str, visible: str, mode: str) -> GuardVerdict:
 def _item(extracted: RipResult, note: str) -> Item | None:
     authors = [extracted.author] if extracted.author else []
     when = _published(extracted.published)
+    pasted = extracted.method == "paste"
     return make_item(
         url=extracted.canonical or extracted.url,
         source="upload",
@@ -279,6 +280,7 @@ def _item(extracted: RipResult, note: str) -> Item | None:
         ts=when,
         authors=authors,
         groups=["manual"],
+        local_only=pasted,
     )
 
 

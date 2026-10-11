@@ -77,6 +77,7 @@ def make_item(
     authors: list[str] | None = None,
     lang: str | None = None,
     groups: list[str] | None = None,
+    local_only: bool = False,
 ) -> Item | None:
     title_c = clean_text(strip_hidden(title))
     text_c = clean_text(strip_hidden(text))
@@ -97,4 +98,5 @@ def make_item(
         lang=lang or guess_lang(document),
         authors=list(authors or []),
         groups=list(groups or []),
+        local_only=local_only,
     )

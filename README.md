@@ -2,7 +2,7 @@
 
 Watch Tower watches news, papers, and social posts for things you care about. You describe each thing as an **indicator** (a YAML file). Incoming items are embedded, cheaply prefiltered, then scored by a pluggable classifier. A strong enough score sends an alert. A weaker score waits for the digest. You can mark each alert right or wrong, and those labels are kept for later threshold tuning or a Kev fine-tune.
 
-It is meant to run on an Apple Silicon Mac, with free and open-source pieces only. No paid model APIs. X/Twitter is not supported.
+It is meant to run on an Apple Silicon Mac. The offline path is free. Jev, the hosted System One classifier, is optional and billed only when `JEV_API_KEY` is set. X/Twitter is not supported.
 
 ## Pipeline
 
@@ -10,11 +10,11 @@ It is meant to run on an Apple Silicon Mac, with free and open-source pieces onl
 feeds → strip hidden text → drop Bluesky spam clusters → dedupe
       → group the same event → embed → cosine + keyword prefilter
       → optional full text for likely hits
-      → injection guard → decider (Kev 1.0, or Ollama, or lexical)
+      → injection guard → decider (Jev, then Kev, then lexical)
       → confidence cascade / cooldown → ntfy or Apprise → thumbs up/down
 ```
 
-Feed text is untrusted. Hidden and invisible text is removed first. What remains is trimmed to a title plus about 300 words, scrubbed of instruction-shaped phrases, and wrapped in a spotlight fence (`untrusted=true`, body lines quoted with `>`). A model is only allowed to produce a score. Alerts are notifications. Nothing in an article is executed. A flagged item is not sent to Kev and cannot push.
+Feed text is untrusted. Hidden and invisible text is removed first. What remains is trimmed, scrubbed of instruction-shaped phrases, and wrapped in a spotlight fence (`untrusted=true`, body lines quoted with `>`). Jev sees a shorter slice: the title, the windows around the matched terms, and dates and counts already compared in code. Kev still sees the title plus about 300 words. A model is only allowed to produce a score. Alerts are notifications. Nothing in an article is executed. A flagged item is not sent to Jev or Kev and cannot push. A pasted upload or a private file stays on the local decider.
 
 ## Demo mode
 
@@ -79,7 +79,7 @@ Subscriptions are written to `config/sources.local.yaml`, which is gitignored, a
 
 Two export pathways sit on top of the older briefing formats. **OPML** is the source list. **Tether** is the packet from sources to decisions for the desk and the date window you have open. Kev JSONL is unchanged and still needs hit and miss labels.
 
-`wt demo` always starts on the hashing embedder and the lexical decider, even if `WT_EMBEDDER` or `WT_DECIDER` are set. Pass `--decider systemone` or `--embedder qwen` only when you want the demo fixtures scored by a local server or the real embedding model.
+`wt demo` always starts on the hashing embedder and the lexical decider, even if `WT_EMBEDDER`, `WT_DECIDER`, or `JEV_API_KEY` are set. Pass `--decider kev` or `--embedder qwen` only when you want the demo fixtures scored by a local server or the real embedding model. Demo fixtures are not sent to Jev.
 
 ## Mac setup (live mode)
 
@@ -97,7 +97,7 @@ pip install -e ".[embed,extract,bluesky]"
 Copy `config/watchtower.example.env` and export what you need. Then:
 
 ```bash
-wt doctor          # indicators, sqlite-vec, whether Kev or Ollama is up
+wt doctor          # indicators, sqlite-vec, Jev OK/FAIL, whether Kev or Ollama is up
 wt run             # one ingest cycle
 wt serve --interval 15
 ```
@@ -112,16 +112,36 @@ Other services go through [Apprise](https://github.com/caronc/apprise) (BSD-2-Cl
 
 ### Classifier
 
+Jev is the primary classifier when a key is set. Kev is the offline fallback. The lexical decider is the offline demo. Set the key in the shell. It is never written into the repo:
+
+```bash
+export JEV_API_KEY='…'                       # from TypeSafe; do not commit it
+export JEV_BASE_URL='https://api.typesafe.ai'  # optional; this is the default
+export JEV_MODEL='jev-1.13.0'                # optional; pinned, not jev-latest
+export WT_DECIDER=jev                        # optional; unset or auto already picks jev when the key is present
+```
+
+`wt doctor` prints `jev: OK` or `jev: FAIL`. OK means `GET /v1/models` answered with that bearer key. FAIL with no key does not call the network. The key is not printed.
+
+The client speaks the official API directly (`POST /v1/systemone`, `Authorization: Bearer`). It does not use a third-party wrapper, and it will not send the key to `jevtypesafeai.com`. One item is one request: every noul, choice, and score question for that item goes in the same body. There is no separate batch endpoint. 429 and 529 are retried with backoff. 401 and 422 are not. Answers are cached on the artifact hash, the indicator, and `WT_JEV_PROMPT_VERSION`.
+
 The decider is selected with `WT_DECIDER`:
 
 | Value | What it calls |
 | --- | --- |
-| `auto` (live default) | A System One server if `GET /v1/models` answers, else Ollama, else lexical |
-| `systemone` | `POST /v1/systemone` on `WT_DECIDER_URL` (default `http://127.0.0.1:8009`) |
+| `auto` | Jev when `JEV_API_KEY` is set, else local Kev if it answers, else Ollama, else lexical |
+| `jev` | `POST https://api.typesafe.ai/v1/systemone` with model `jev-1.13.0` |
+| `kev` | Local Kev, `POST /v1/systemone` on `WT_DECIDER_URL` (default `http://127.0.0.1:8009`). `systemone` is the same |
 | `ollama` | A local Ollama chat model forced to return JSON (`WT_OLLAMA_MODEL`) |
-| `lexical` | Offline keyword / example overlap. This is what demo mode uses |
+| `lexical` | Offline keyword / example overlap. This is what demo mode uses, even if a key is set |
 
-`WT_DECIDER_FALLBACK=1` (the default) scores an item lexically when the chosen server errors, so a downed Kev process does not stall the loop.
+`WT_DECIDER_FALLBACK=1` (the default) is the order Jev, then Kev, then lexical. A transport error on Jev uses local Kev when that server is up, and the lexical decider otherwise. The monthly cap uses that same local chain even when the fallback flag is off. Explicit `lexical` never calls Jev. `WT_DECIDER=jev` with no key does not call the network; it uses Kev or lexical.
+
+Manual uploads (a paste on the catalog) and private files (`method: paste`, or a `file:` URL) set `local_only` and stay off Jev. A public URL rip can be scored by Jev. `WT_JEV_ALLOW_PRIVATE=1` sends the private ones too.
+
+Spend is `usage.input_tokens` times the configured price. Output tokens are free. The default is `$0.042` per million input tokens, which is the TypeSafe list price (`$42` per billion). Change it with `WT_JEV_USD_PER_MTOK` or the Spend panel on the desk. The monthly cap defaults to `$10` (`WT_JEV_MONTHLY_USD`, `0` means no cap). A day at or over `$1` (`WT_JEV_DAILY_WARN_USD`) warns and still calls Jev until the monthly cap. The Spend panel reads `data/desk.db`. `wt run` writes `data/watchtower.db` unless `WT_DB` points at the desk file.
+
+Jev 1.13 leans toward the first Choice option, so options are rotated per item. It is weak at dates and counts, so those are computed locally and attached as code facts. Long irrelevant text is left out; the request sends the matched windows. Injected text can still sway it, so the injection guard runs first and the spotlight fence stays on the state. A request is kept inside the published limits: 64k tokens total, 32k for the state plus the longest question, and at most 255 Choice options. The service limit is 100k tokens per second and 80 requests per second; 429 is retried.
 
 **Kev 1.0** is the decision model (Apache-2.0, [jaredpalmer/kev](https://github.com/jaredpalmer/kev)). It is not vendored here. The current release has four sizes on Qwen3.5 / Qwen3.8 bases, pinned with `@v1.0`:
 
@@ -166,7 +186,7 @@ Each indicator can set `push_min_confidence` and `uncertain_min` (the examples u
 
 ### Same event
 
-Exact copies are still dropped (URL, content hash, simhash, or cosine). A second outlet telling the same story is grouped when the titles overlap, the simhash is close, or cosine is high. When the decider is Kev, one `noul` question asks whether it is the same event. The lexical decider answers that from the title overlap, so the offline demo groups a wire rewrite and still alerts a looser paraphrase on its own. A later item in an event that already pushed does not push that indicator again.
+Exact copies are still dropped (URL, content hash, simhash, or cosine). A second outlet telling the same story is grouped when the titles overlap, the simhash is close, or cosine is high. When the decider is Jev or Kev, one `noul` question asks whether it is the same event. The lexical decider answers that from the title overlap, so the offline demo groups a wire rewrite and still alerts a looser paraphrase on its own. A later item in an event that already pushed does not push that indicator again.
 
 ### Why an alert matched
 
@@ -176,7 +196,7 @@ Push and digest text, and the `matches` row, include the indicator name, matched
 
 Before classification, Watch Tower strips zero-width and bidi characters, HTML comments, `hidden` / `aria-hidden`, `display:none`, `visibility:hidden`, `font-size:0`, and white-on-white text. A clean article with an injection only in that hidden text can still alert. A visible injection cannot push.
 
-`WT_INJECTION_GUARD=heuristic` (the default, and what demo mode uses) is the offline pattern list. `WT_INJECTION_GUARD=deberta` also runs [`protectai/deberta-v3-base-prompt-injection-v2`](https://huggingface.co/protectai/deberta-v3-base-prompt-injection-v2) (Apache-2.0, DeBERTa-v3-base, about 184M parameters) when `pip install 'watch-tower[guard]'` is installed. That model is optional and was not downloaded here. Flagged items are held as digests and are not sent to Kev.
+`WT_INJECTION_GUARD=heuristic` (the default, and what demo mode uses) is the offline pattern list. `WT_INJECTION_GUARD=deberta` also runs [`protectai/deberta-v3-base-prompt-injection-v2`](https://huggingface.co/protectai/deberta-v3-base-prompt-injection-v2) (Apache-2.0, DeBERTa-v3-base, about 184M parameters) when `pip install 'watch-tower[guard]'` is installed. That model is optional and was not downloaded here. Flagged items are held as digests and are not sent to Jev or Kev.
 
 `fixtures/canaries.json` is a red-team set (visible injections, a zero-width split, a fake fence). `wt` tests assert that none of them push.
 
@@ -308,7 +328,8 @@ wt eval
 
 Checked on 7 Oct 2026 while building this:
 
-- **Kev 1.0** (`kev-0.8b`, `kev-4b`, `kev-9b`, `kev-27b`, tag `@v1.0`) is the decision model. Its server already uses MLX on Apple Silicon, so there is no second MLX backend. jevmlx and SemIf exist and were rejected because they score generic Qwen checkpoints, not Kev 1.0. The weights were not downloaded in this environment, so the backend that actually ran end to end is the **lexical** fallback. The System One client was checked against a mock of Kev's published JSON, including the same-event question. `wt doctor` tells you if a live server is up.
+- **Jev 1.13** (`jev-1.13.0` at `https://api.typesafe.ai/v1/systemone`) is the hosted classifier when `JEV_API_KEY` is set. This environment has no key, so the client was checked against the live response shape with mocks. `wt doctor` prints `jev: OK` or `jev: FAIL`. Kev 1.0 stays the offline fallback.
+- **Kev 1.0** (`kev-0.8b`, `kev-4b`, `kev-9b`, `kev-27b`, tag `@v1.0`) is the local decision model. Its server already uses MLX on Apple Silicon, so there is no second MLX backend. jevmlx and SemIf exist and were rejected because they score generic Qwen checkpoints, not Kev 1.0. The weights were not downloaded in this environment, so the backend that actually ran end to end without a key is the **lexical** fallback. The System One client was checked against a mock of Kev's published JSON, including the same-event question. `wt doctor` tells you if a live server is up.
 - **DeBERTa prompt-injection v2** is optional and was not downloaded. Canaries are blocked by the offline heuristic.
 - **Qwen3-Embedding-0.6B** is the live default when sentence-transformers is installed. Demo mode and machines without the package use a hashing embedder so the pipeline runs with no download. Do not reuse hashing thresholds as if they were Qwen scores.
 - **sqlite-vec** is used through `vec_distance_cosine` on float32 blob columns (the documented non-virtual-table path). `vec0` virtual tables want integer row ids and a frozen dimension, which fights text ids and switching embedders.

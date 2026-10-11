@@ -106,6 +106,23 @@ CREATE TABLE IF NOT EXISTS rip_jobs (
   result_json TEXT NOT NULL DEFAULT '{}',
   created_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS jev_usage (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  created_at TEXT NOT NULL,
+  run_id TEXT NOT NULL,
+  input_tokens INTEGER NOT NULL,
+  output_tokens INTEGER NOT NULL,
+  usd REAL NOT NULL,
+  cached INTEGER NOT NULL DEFAULT 0,
+  calls INTEGER NOT NULL DEFAULT 1
+);
+CREATE INDEX IF NOT EXISTS idx_jev_usage_created ON jev_usage(created_at);
+CREATE TABLE IF NOT EXISTS jev_cache (
+  key TEXT PRIMARY KEY,
+  indicator_id TEXT NOT NULL,
+  answer_json TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
 """
 
 
@@ -201,6 +218,33 @@ class Store:
               result_item_id TEXT NOT NULL DEFAULT '',
               error TEXT NOT NULL DEFAULT '',
               result_json TEXT NOT NULL DEFAULT '{}',
+              created_at TEXT NOT NULL
+            )
+            """
+        )
+        self.conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS jev_usage (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              created_at TEXT NOT NULL,
+              run_id TEXT NOT NULL,
+              input_tokens INTEGER NOT NULL,
+              output_tokens INTEGER NOT NULL,
+              usd REAL NOT NULL,
+              cached INTEGER NOT NULL DEFAULT 0,
+              calls INTEGER NOT NULL DEFAULT 1
+            )
+            """
+        )
+        self.conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_jev_usage_created ON jev_usage(created_at)"
+        )
+        self.conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS jev_cache (
+              key TEXT PRIMARY KEY,
+              indicator_id TEXT NOT NULL,
+              answer_json TEXT NOT NULL,
               created_at TEXT NOT NULL
             )
             """

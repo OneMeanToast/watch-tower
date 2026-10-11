@@ -43,6 +43,7 @@ def prepare_upload(*, title: str, text: str, url: str, published_at: str) -> tup
         text=body,
         ts=when,
         groups=["manual"],
+        local_only=True,
     )
     if item is None:
         raise UploadError("nothing left after stripping hidden text")

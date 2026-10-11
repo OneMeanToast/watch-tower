@@ -1,18 +1,20 @@
 """Pluggable decision stage.
 
 Backends:
-  lexical     always available, offline, heuristic probabilities
-  systemone   POST /v1/systemone (Kev 1.0, or another server with the same shape)
+  jev         hosted System One at api.typesafe.ai (default when JEV_API_KEY is set)
+  kev         local Kev 1.0, POST /v1/systemone (alias: systemone)
   ollama      local chat model forced to return JSON
-  auto        probe systemone, then ollama, else lexical
+  lexical     always available, offline, heuristic probabilities
+  auto        Jev when a key is set, else probe local Kev, then Ollama, else lexical
 
 Kev's own server already runs on MLX on Apple Silicon
 (`python -m kev.serve --run jaredpalmer/kev-4b@v1.0`). Third-party MLX
-wrappers that score generic Qwen chat models are not wired in.
+wrappers that score generic Qwen chat models are not wired in. Jev is the
+official TypeSafe HTTP API, not a reseller host.
 
-If the selected server errors and fallback is on, the item is scored lexically
-instead of being dropped. State sent to the model is the spotlight fence:
-title, about 300 words, and the matched snippets.
+Fallback order when Jev is selected: Jev, then local Kev if it answers,
+then lexical. A monthly budget cap and local-only items skip Jev and use
+that same local chain. State sent to a model is the spotlight fence.
 """
 
 from __future__ import annotations
@@ -22,6 +24,7 @@ import logging
 import math
 import re
 from typing import Protocol
+from urllib.parse import urlparse
 
 import httpx
 
@@ -214,7 +217,7 @@ class SystemOneDecider:
             payload = response.json()
         except json.JSONDecodeError as exc:
             raise DeciderError("systemone returned non-JSON") from exc
-        return _parse_systemone(payload, candidates)
+        return _parse_systemone(payload, candidates, backend=self.name)
 
     def same_event(self, item: Item, other_title: str, other_text: str) -> bool:
         """One noul question: is this the same real-world event as the other item?"""
@@ -256,7 +259,9 @@ class SystemOneDecider:
         return float(answer["noul"]) >= 0.5
 
 
-def _parse_systemone(payload: dict, candidates: list[Candidate]) -> dict[str, Decision]:
+def _parse_systemone(
+    payload: dict, candidates: list[Candidate], *, backend: str = "systemone"
+) -> dict[str, Decision]:
     answers = payload.get("answers")
     if not isinstance(answers, dict):
         raise DeciderError("systemone response has no answers object")
@@ -293,7 +298,7 @@ def _parse_systemone(payload: dict, candidates: list[Candidate]) -> dict[str, De
             severity=max(0.0, severity),
             category=category,
             confidence=min(1.0, max(0.0, confidence)),
-            backend="systemone",
+            backend=backend,
             answers=scoped,
         )
     return decisions
@@ -430,12 +435,37 @@ class FallbackDecider:
             return True
 
 
-def probe_systemone(base_url: str, timeout: float = 2.0) -> bool:
+def probe_systemone(
+    base_url: str,
+    timeout: float = 2.0,
+    api_key: str | None = None,
+    transport: httpx.BaseTransport | None = None,
+) -> bool:
+    """GET /v1/models. The official Jev host requires the bearer key.
+
+    An unauthenticated call to api.typesafe.ai returns 401. That is a missing
+    key, not a server that is down, so this probe does not treat it as reachable
+    and does not send the request at all unless a key is present.
+    """
+    root = base_url.rstrip("/")
+    if root.endswith("/v1/systemone"):
+        root = root[: -len("/v1/systemone")]
+    headers = {}
+    if api_key:
+        headers["authorization"] = f"Bearer {api_key}"
+    elif _is_official_jev(root):
+        return False
     try:
-        response = httpx.get(f"{base_url.rstrip('/')}/v1/models", timeout=timeout)
+        with httpx.Client(timeout=timeout, transport=transport) as client:
+            response = client.get(f"{root}/v1/models", headers=headers)
         return response.status_code < 500
     except httpx.HTTPError:
         return False
+
+
+def _is_official_jev(base_url: str) -> bool:
+    host = (urlparse(base_url).hostname or "").lower()
+    return host == "api.typesafe.ai" or host.endswith(".typesafe.ai")
 
 
 def probe_ollama(base_url: str, timeout: float = 2.0) -> bool:
@@ -455,28 +485,84 @@ def build_decider(
     ollama_url: str,
     ollama_model: str,
     fallback: bool,
+    jev_base_url: str = "https://api.typesafe.ai",
+    jev_api_key: str | None = None,
+    jev_model: str = "jev-1.13.0",
+    store=None,
+    usd_per_mtok: float = 0.042,
+    monthly_usd: float = 10.0,
+    daily_warn_usd: float = 1.0,
+    prompt_version: str = "1",
+    allow_private: bool = False,
+    transport: httpx.BaseTransport | None = None,
+    sleep=None,
 ) -> Decider:
     lexical = LexicalDecider()
+    kind = (kind or "auto").strip().lower()
     if kind == "lexical":
         return lexical
-    if kind == "auto":
-        if probe_systemone(decider_url):
-            kind = "systemone"
-            log.info("decider auto: using systemone at %s", decider_url)
+    if kind in {"", "auto"}:
+        if jev_api_key:
+            kind = "jev"
+            log.info("decider auto: JEV_API_KEY is set, using jev")
+        elif probe_systemone(decider_url, api_key=api_key):
+            kind = "kev"
+            log.info("decider auto: using local kev at %s", decider_url)
         elif probe_ollama(ollama_url):
             kind = "ollama"
             log.info("decider auto: using ollama at %s", ollama_url)
         else:
             log.info("decider auto: no server reachable, using lexical")
             return lexical
-    if kind == "systemone":
-        primary: Decider = SystemOneDecider(
-            decider_url, model=decider_model, api_key=api_key
+    if kind == "jev":
+        from wt.jev import JevDecider
+
+        local = _local_chain(
+            decider_url=decider_url,
+            decider_model=decider_model,
+            api_key=api_key,
+            lexical=lexical,
         )
+        if not jev_api_key:
+            log.warning("WT_DECIDER=jev but JEV_API_KEY is unset; using the local decider")
+            return local
+        return JevDecider(
+            jev_base_url,
+            api_key=jev_api_key,
+            model=jev_model,
+            transport=transport,
+            store=store,
+            usd_per_mtok=usd_per_mtok,
+            monthly_usd=monthly_usd,
+            daily_warn_usd=daily_warn_usd,
+            prompt_version=prompt_version,
+            local=local,
+            fallback=fallback,
+            allow_private=allow_private,
+            sleep=sleep,
+        )
+    if kind in {"systemone", "kev"}:
+        primary: Decider = SystemOneDecider(
+            decider_url,
+            model=decider_model,
+            api_key=api_key,
+            transport=transport,
+        )
+        primary.name = "kev"
     elif kind == "ollama":
-        primary = OllamaDecider(ollama_url, model=ollama_model)
+        primary = OllamaDecider(ollama_url, model=ollama_model, transport=transport)
     else:
         raise ValueError(f"unknown decider {kind!r}")
     if fallback:
         return FallbackDecider(primary, lexical)
     return primary
+
+
+def _local_chain(*, decider_url: str, decider_model: str, api_key: str | None, lexical: LexicalDecider) -> Decider:
+    """Kev when the local server answers, otherwise lexical. Probed once per cycle."""
+    if probe_systemone(decider_url, api_key=api_key):
+        kev = SystemOneDecider(decider_url, model=decider_model, api_key=api_key)
+        kev.name = "kev"
+        log.info("local fallback: kev at %s, then lexical", decider_url)
+        return FallbackDecider(kev, lexical)
+    return lexical

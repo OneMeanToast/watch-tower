@@ -28,13 +28,13 @@ def main(argv: list[str] | None = None) -> int:
 
     demo = sub.add_parser("demo", help="run the offline fixture pipeline (replaces the demo database)")
     demo.add_argument("--db", type=Path, default=None)
-    demo.add_argument("--decider", default=None, help="default lexical; systemone or ollama are optional")
+    demo.add_argument("--decider", default=None, help="default lexical; jev, kev, or ollama are optional")
     demo.add_argument("--embedder", default=None, help="default hashing; qwen is optional")
     demo.set_defaults(func=_cmd_demo)
 
     run = sub.add_parser("run", help="ingest once and alert")
     run.add_argument("--db", type=Path, default=None)
-    run.add_argument("--decider", default=None, help="auto, systemone, ollama, or lexical")
+    run.add_argument("--decider", default=None, help="auto, jev, kev, lexical, or ollama")
     run.add_argument("--embedder", default=None, help="auto, qwen, or hashing")
     run.set_defaults(func=_cmd_run)
 
@@ -452,7 +452,16 @@ def _cmd_doctor(args) -> int:
     print(f"db: {settings.db_path}")
     print(f"indicators: {settings.indicators_dir}")
     print(f"embedder setting: {settings.embedder} ({settings.embedder_model})")
-    print(f"decider setting: {settings.decider} ({settings.decider_url}, model={settings.decider_model})")
+    print(
+        f"decider setting: {settings.decider} "
+        f"(kev {settings.decider_url}, model={settings.decider_model}; "
+        f"jev {settings.jev_base_url}, model={settings.jev_model})"
+    )
+    print(f"jev key: {'set' if settings.jev_api_key else 'missing'}")
+    print(
+        f"jev price: ${settings.jev_usd_per_mtok}/MTok input, output free; "
+        f"monthly cap ${settings.jev_monthly_usd:g}; daily warning ${settings.jev_daily_warn_usd:g}"
+    )
     print("kev release: 1.0 checkpoints kev-0.8b, kev-4b, kev-9b, kev-27b (pin @v1.0)")
     print("kev server: python -m kev.serve uses MLX on Apple Silicon; set KEV_DATE_FACTS=1")
     print("kev size: kev-0.8b@v1.0 on any Apple Silicon Mac; kev-4b@v1.0 wants 32 GB")
@@ -472,8 +481,13 @@ def _cmd_doctor(args) -> int:
     print(f"vector backend: {store.vector_backend}")
     store.close()
     from wt.decider import probe_ollama, probe_systemone
+    from wt.jev import probe_jev
 
-    print(f"systemone reachable: {probe_systemone(settings.decider_url)}")
+    jev_ok, jev_detail = probe_jev(settings.jev_base_url, settings.jev_api_key)
+    print(f"jev: {'OK' if jev_ok else 'FAIL'} ({jev_detail})")
+    print(
+        f"systemone reachable: {probe_systemone(settings.decider_url, api_key=settings.decider_api_key)}"
+    )
     print(f"ollama reachable: {probe_ollama(settings.ollama_url)}")
     try:
         sources = load_sources(settings.sources_path)

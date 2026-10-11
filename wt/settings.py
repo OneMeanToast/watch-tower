@@ -23,6 +23,19 @@ def _split_urls(value: str | None) -> list[str]:
     return [part.strip() for part in value.split(",") if part.strip()]
 
 
+def _float_env(name: str, default: float) -> float:
+    raw = os.environ.get(name)
+    if raw is None or not raw.strip():
+        return default
+    try:
+        value = float(raw)
+    except ValueError:
+        return default
+    if value < 0:
+        return default
+    return value
+
+
 @dataclass
 class Settings:
     db_path: Path
@@ -53,16 +66,30 @@ class Settings:
     injection_guard: str = "heuristic"
     fetch_fulltext: bool = True
     spam_min_cluster: int = 3
+    jev_base_url: str = "https://api.typesafe.ai"
+    jev_api_key: str | None = None
+    jev_model: str = "jev-1.13.0"
+    jev_usd_per_mtok: float = 0.042
+    jev_monthly_usd: float = 10.0
+    jev_daily_warn_usd: float = 1.0
+    jev_prompt_version: str = "1"
+    jev_allow_private: bool = False
 
     @classmethod
     def from_env(cls, root: Path | None = None) -> Settings:
         root = root or project_root()
+        jev_key = (os.environ.get("JEV_API_KEY") or "").strip() or None
+        requested = os.environ.get("WT_DECIDER", "").strip().lower()
+        if requested in {"", "auto"}:
+            decider = "jev" if jev_key else "auto"
+        else:
+            decider = requested
         return cls(
             db_path=Path(os.environ.get("WT_DB", root / "data" / "watchtower.db")),
             indicators_dir=Path(os.environ.get("WT_INDICATORS", root / "config" / "indicators")),
             sources_path=Path(os.environ.get("WT_SOURCES", root / "config" / "sources.yaml")),
             fixtures_path=Path(os.environ.get("WT_FIXTURES", root / "fixtures" / "items.json")),
-            decider=os.environ.get("WT_DECIDER", "auto"),
+            decider=decider,
             decider_url=os.environ.get("WT_DECIDER_URL", "http://127.0.0.1:8009"),
             decider_model=os.environ.get("WT_DECIDER_MODEL", "kev-latest"),
             decider_api_key=os.environ.get("WT_DECIDER_API_KEY") or None,
@@ -81,6 +108,16 @@ class Settings:
             injection_guard=os.environ.get("WT_INJECTION_GUARD", "heuristic").strip().lower(),
             fetch_fulltext=os.environ.get("WT_FETCH_FULLTEXT", "1") not in {"0", "false", "no"},
             spam_min_cluster=int(os.environ.get("WT_SPAM_MIN_CLUSTER", "3")),
+            jev_base_url=os.environ.get("JEV_BASE_URL", "https://api.typesafe.ai").strip()
+            or "https://api.typesafe.ai",
+            jev_api_key=jev_key,
+            jev_model=os.environ.get("JEV_MODEL", "jev-1.13.0").strip() or "jev-1.13.0",
+            jev_usd_per_mtok=_float_env("WT_JEV_USD_PER_MTOK", 0.042),
+            jev_monthly_usd=_float_env("WT_JEV_MONTHLY_USD", 10.0),
+            jev_daily_warn_usd=_float_env("WT_JEV_DAILY_WARN_USD", 1.0),
+            jev_prompt_version=os.environ.get("WT_JEV_PROMPT_VERSION", "1").strip() or "1",
+            jev_allow_private=os.environ.get("WT_JEV_ALLOW_PRIVATE", "0")
+            not in {"0", "false", "no", ""},
         )
 
     @classmethod
@@ -93,6 +130,7 @@ class Settings:
             base.db_path = root / "data" / "demo.db"
         base.decider = "lexical"
         base.embedder = "hashing"
+        # A key in the environment must not send fixture text to Jev.
         base.escalate = ""
         base.fetch_fulltext = False
         base.injection_guard = "heuristic"

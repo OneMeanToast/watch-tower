@@ -1,0 +1,45 @@
+{
+  "request": {
+    "state": "Help! My payouts have been failing for 3 days.",
+    "model": "jev-1.13.0",
+    "questions": {
+      "demo::hit": {
+        "type": "noul",
+        "instructions": "Does this item announce that model weights are newly available?"
+      },
+      "demo::kind": {
+        "type": "choice",
+        "instructions": "What kind of item is this?",
+        "criteria": {
+          "organization": "a lab or company",
+          "release": "weights released"
+        }
+      },
+      "demo::severity": {
+        "type": "score",
+        "instructions": "How important is this release?",
+        "criteria": ["trivial", "minor"]
+      }
+    }
+  },
+  "response": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "demo::hit": {"type": "noul", "noul": 0.97},
+      "demo::kind": {
+        "type": "choice",
+        "choice": "organization",
+        "confidence": 1.0,
+        "probabilities": {"organization": 0.91, "release": 0.09}
+      },
+      "demo::severity": {
+        "type": "score",
+        "score": 1.0,
+        "confidence": 1.0,
+        "probabilities": {"0": 0.0, "1": 1.0},
+        "legend": {"0": "trivial", "1": "minor"}
+      }
+    },
+    "usage": {"input_tokens": 563, "output_tokens": 148}
+  }
+}

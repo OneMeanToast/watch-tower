@@ -126,6 +126,15 @@ def run_items(
         ollama_url=settings.ollama_url,
         ollama_model=settings.ollama_model,
         fallback=settings.decider_fallback,
+        jev_base_url=settings.jev_base_url,
+        jev_api_key=settings.jev_api_key,
+        jev_model=settings.jev_model,
+        store=store,
+        usd_per_mtok=settings.jev_usd_per_mtok,
+        monthly_usd=settings.jev_monthly_usd,
+        daily_warn_usd=settings.jev_daily_warn_usd,
+        prompt_version=settings.jev_prompt_version,
+        allow_private=settings.jev_allow_private,
     )
     index_indicators(store, embedder, indicators)
     visible = [_visible_item(item) for item in items]

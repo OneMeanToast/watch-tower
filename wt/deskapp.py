@@ -12,6 +12,7 @@ from pydantic import BaseModel
 
 from wt import __version__
 from wt.catalog import build_catalog, parse_bound, probe_sources
+from wt.cost import resolve_daily_warn, resolve_monthly, resolve_rate, summary as cost_summary
 from wt.desks import get_desk, load_desks, upsert_desk
 from wt.exports import filter_rows, to_csv, to_json, to_kev, to_markdown, to_opml, to_tether
 from wt.rip.api import router as rip_router
@@ -63,6 +64,12 @@ class UploadBody(BaseModel):
     text: str = ""
     url: str = ""
     published_at: str = ""
+
+
+class CostBody(BaseModel):
+    usd_per_mtok: float | None = None
+    monthly_usd: float | None = None
+    daily_warn_usd: float | None = None
 
 
 class DeskBody(BaseModel):
@@ -164,6 +171,44 @@ def status() -> dict:
         "last_report": json.loads(last) if last else None,
         "desks": load_desks(root),
     }
+
+
+@app.get("/cost")
+def cost() -> dict:
+    settings = desk_settings(True)
+    store = Store(settings.db_path)
+    try:
+        rate = resolve_rate(store, settings.jev_usd_per_mtok)
+        monthly = resolve_monthly(store, settings.jev_monthly_usd)
+        daily = resolve_daily_warn(store, settings.jev_daily_warn_usd)
+        return cost_summary(store, rate=rate, monthly=monthly, daily_warn=daily)
+    finally:
+        store.close()
+
+
+@app.post("/cost")
+def save_cost(body: CostBody) -> dict:
+    settings = desk_settings(True)
+    store = Store(settings.db_path)
+    try:
+        if body.usd_per_mtok is not None:
+            if body.usd_per_mtok < 0:
+                raise HTTPException(status_code=400, detail="usd_per_mtok must be >= 0")
+            store.meta_set("jev_usd_per_mtok", str(body.usd_per_mtok))
+        if body.monthly_usd is not None:
+            if body.monthly_usd < 0:
+                raise HTTPException(status_code=400, detail="monthly_usd must be >= 0")
+            store.meta_set("jev_monthly_usd", str(body.monthly_usd))
+        if body.daily_warn_usd is not None:
+            if body.daily_warn_usd < 0:
+                raise HTTPException(status_code=400, detail="daily_warn_usd must be >= 0")
+            store.meta_set("jev_daily_warn_usd", str(body.daily_warn_usd))
+        rate = resolve_rate(store, settings.jev_usd_per_mtok)
+        monthly = resolve_monthly(store, settings.jev_monthly_usd)
+        daily = resolve_daily_warn(store, settings.jev_daily_warn_usd)
+        return cost_summary(store, rate=rate, monthly=monthly, daily_warn=daily)
+    finally:
+        store.close()
 
 
 @app.post("/wire")

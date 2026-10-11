@@ -21,6 +21,8 @@ class Item(BaseModel):
     event_id: str = ""
     # Indicator source keys besides the feed id, e.g. "ai-news" matches rss:ai-news.
     groups: list[str] = Field(default_factory=list)
+    # Manual uploads and private files stay on the local decider. Feeds stay false.
+    local_only: bool = False
 
     def document(self) -> str:
         parts = [self.title.strip(), self.text.strip()]

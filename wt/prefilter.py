@@ -9,8 +9,9 @@ from wt.text import term_in
 
 
 def source_allowed(indicator: Indicator, item: Item) -> bool:
-    # A manual upload is something a person asked the wire to read.
-    if item.source == "upload":
+    # A manual upload or a feed the person subscribed is something they asked
+    # the wire to read, so every indicator may see it.
+    if item.source in {"upload", "selector"} or "manual" in item.groups:
         return True
     if not indicator.sources:
         return True

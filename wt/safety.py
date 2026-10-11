@@ -122,6 +122,57 @@ def injection_suspected(text: str) -> bool:
     return any(pattern.search(visible) for pattern in _PATTERNS)
 
 
+def hidden_instruction(text: str) -> bool:
+    """True when instruction-shaped text exists only in a hidden fragment.
+
+    Feed ingest strips a top-level hidden fragment and then scores what remains.
+    A manual rip also walks nested markup, because a page can hide an instruction
+    inside an otherwise visible article.
+    """
+    raw = text or ""
+    visible = strip_hidden(raw)
+    for pattern in _PATTERNS:
+        if pattern.search(raw) and not pattern.search(visible):
+            return True
+    for chunk in _nested_hidden_text(raw):
+        if any(pattern.search(chunk) for pattern in _PATTERNS):
+            return True
+    return False
+
+
+def _nested_hidden_text(html: str) -> list[str]:
+    if "<" not in (html or ""):
+        return []
+    try:
+        from lxml import html as lhtml
+    except ImportError:
+        return []
+    try:
+        document = lhtml.fromstring(html)
+    except Exception:
+        return []
+    found: list[str] = []
+    for node in document.iter():
+        if not hasattr(node, "attrib"):
+            continue
+        if not _node_hides(node):
+            continue
+        blob = " ".join(node.itertext())
+        if blob.strip():
+            found.append(blob)
+    return found
+
+
+def _node_hides(node) -> bool:
+    attrib = {str(key).lower(): str(value) for key, value in node.attrib.items()}
+    if "hidden" in attrib:
+        return True
+    if attrib.get("aria-hidden", "").lower() == "true":
+        return True
+    style = attrib.get("style", "")
+    return bool(style) and _style_hides(style)
+
+
 def neutralize(text: str) -> str:
     """Redact prompt-injection phrasing. Leave the rest of the article intact."""
     cleaned = strip_hidden(text or "")

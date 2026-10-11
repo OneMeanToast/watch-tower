@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.watchtower.inbox</string>
+  <key>WorkingDirectory</key>
+  <string>/Users/weston/watch-tower</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>WT_NTFY_INBOX</key>
+    <string>https://ntfy.sh/replace-with-a-private-topic/json</string>
+  </dict>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/weston/watch-tower/.venv/bin/python</string>
+    <string>-m</string>
+    <string>wt</string>
+    <string>inbox</string>
+  </array>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>StandardOutPath</key>
+  <string>/Users/weston/watch-tower/data/inbox.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/weston/watch-tower/data/inbox.err</string>
+</dict>
+</plist>

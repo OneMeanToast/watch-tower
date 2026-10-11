@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.watchtower.server</string>
+  <key>WorkingDirectory</key>
+  <string>/Users/weston/watch-tower</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/weston/watch-tower/.venv/bin/python</string>
+    <string>-m</string>
+    <string>wt</string>
+    <string>desk</string>
+    <string>--port</string>
+    <string>47221</string>
+    <string>--api-port</string>
+    <string>8641</string>
+  </array>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>StandardOutPath</key>
+  <string>/Users/weston/watch-tower/data/desk.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/weston/watch-tower/data/desk.err</string>
+</dict>
+</plist>

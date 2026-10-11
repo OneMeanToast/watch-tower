@@ -14,6 +14,8 @@ from wt import __version__
 from wt.catalog import build_catalog, parse_bound, probe_sources
 from wt.desks import get_desk, load_desks, upsert_desk
 from wt.exports import filter_rows, to_csv, to_json, to_kev, to_markdown, to_opml, to_tether
+from wt.rip.api import router as rip_router
+from wt.rip.pipeline import RipError, commit_rip
 from wt.uploads import UploadError, prepare_upload
 from wt.feedback import record_feedback
 from wt.indicators import IndicatorError, load_indicators, update_indicator
@@ -22,9 +24,15 @@ from wt.settings import Settings, project_root
 from wt.store import Store
 
 app = FastAPI(title="Watch Tower desk")
+app.include_router(rip_router)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://127.0.0.1:47221",
+        "http://localhost:47221",
+        "http://127.0.0.1:8641",
+        "http://localhost:8641",
+    ],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -240,6 +248,40 @@ def catalog_probe() -> dict:
 
 @app.post("/catalog/upload")
 def catalog_upload(body: UploadBody) -> dict:
+    link = (body.url or "").strip()
+    pasted = (body.text or "").strip()
+    if link and not pasted:
+        settings = desk_settings(False)
+        store = Store(settings.db_path)
+        try:
+            payload = commit_rip(
+                settings,
+                store,
+                link,
+                note=body.title.strip(),
+                title=body.title.strip(),
+            )
+        except RipError as exc:
+            raise HTTPException(status_code=exc.status, detail=str(exc)) from exc
+        except Exception as exc:
+            raise HTTPException(status_code=502, detail=str(exc)) from exc
+        finally:
+            store.close()
+        if not payload.get("stored"):
+            raise HTTPException(
+                status_code=400,
+                detail="the page did not yield enough text; paste it on the rip desk",
+            )
+        return {
+            "id": payload["id"],
+            "title": payload["title"],
+            "method": payload["method"],
+            "published_at": payload["published_at"],
+            "items_new": payload["items_new"],
+            "duplicates": payload["duplicates"],
+            "pushes": payload["pushes"],
+            "digests": payload["digests"],
+        }
     try:
         item, method, note = prepare_upload(
             title=body.title,

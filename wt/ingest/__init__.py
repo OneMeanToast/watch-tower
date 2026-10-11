@@ -10,6 +10,7 @@ from wt.ingest.gdelt import fetch_gdelt
 from wt.ingest.mastodon import fetch_mastodon
 from wt.ingest.openalex import fetch_openalex
 from wt.ingest.rss import fetch_rss
+from wt.ingest.selector import due_feeds, fetch_selector, stamp_feeds
 from wt.ingest.worldmonitor import load_catalog
 from wt.ingest.x_paid import XPaidDisabled, fetch_x
 from wt.models import Item
@@ -21,12 +22,22 @@ def ingest_all(sources: dict, store) -> tuple[list[Item], list[str]]:
     items: list[Item] = []
     errors: list[str] = []
     rss_cfg = sources.get("rss") or {}
+    rss_feeds = list(rss_cfg.get("feeds") or [])
+    due = due_feeds(rss_feeds, store)
     try:
-        found, feed_errors = fetch_rss(rss_cfg)
+        found, feed_errors = fetch_rss({**rss_cfg, "feeds": due})
         items.extend(found)
         errors.extend(feed_errors)
+        stamp_feeds(due, store)
     except Exception as exc:
         errors.append(f"rss: {exc}")
+
+    try:
+        found, selector_errors = fetch_selector(sources.get("selector") or {}, store)
+        items.extend(found)
+        errors.extend(selector_errors)
+    except Exception as exc:
+        errors.append(f"selector: {exc}")
 
     try:
         items.extend(fetch_arxiv(sources.get("arxiv") or {}))

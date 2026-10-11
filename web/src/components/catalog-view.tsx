@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -332,7 +333,15 @@ export function CatalogView({
         </section>
 
         <section className="px-4 py-4 md:px-6">
-          <h3 className="text-[11px] tracking-[0.22em] uppercase text-white/45">Manual upload and extraction</h3>
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <h3 className="text-[11px] tracking-[0.22em] uppercase text-white/45">Manual upload and extraction</h3>
+            <Link href="/rip" className="text-[11px] uppercase tracking-[0.18em] text-primary">
+              Rip a URL
+            </Link>
+          </div>
+          <p className="mt-2 text-xs text-white/45">
+            A URL with an empty paste runs the rip chain: hidden text, the injection guard, then the same lanes as a feed.
+          </p>
           <form
             className="mt-3 space-y-2"
             onSubmit={async (event) => {

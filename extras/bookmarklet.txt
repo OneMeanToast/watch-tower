@@ -1,0 +1,3 @@
+Drag this bookmarklet to the Safari or Chrome bookmarks bar. It opens the desk on port 47221. It does not fetch the desk from the page you are reading.
+
+javascript:(()=>{window.open('http://127.0.0.1:47221/rip?url='+encodeURIComponent(location.href)+'&title='+encodeURIComponent(document.title)+'&sel='+encodeURIComponent(String(getSelection()).slice(0,4000)),'wt','width=520,height=720')})()

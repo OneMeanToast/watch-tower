@@ -111,8 +111,10 @@ def _ping(url: str, timeout: float) -> dict:
 
 
 def _configured(root: Path) -> list[dict]:
+    from wt.pipeline import load_sources
+
     path = root / "config" / "sources.yaml"
-    data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    data = load_sources(path)
     if not isinstance(data, dict):
         return []
     rows: list[dict] = []
@@ -132,7 +134,29 @@ def _configured(root: Path) -> list[dict]:
                 feed_id=feed_id,
                 enabled=bool(feed.get("url")),
                 dated=True,
-                detail=f"RSS · group {feed.get('group') or 'none'} · {rss.get('per_feed', 15)} items",
+                detail=_rss_detail(feed, rss),
+            )
+        )
+    selector = data.get("selector") or {}
+    for feed in selector.get("feeds") or []:
+        if not isinstance(feed, dict):
+            continue
+        feed_id = str(feed.get("id") or "selector")
+        rows.append(
+            _row(
+                id=f"selector:{feed_id}",
+                kind="selector",
+                name=_title(feed_id),
+                group=str(feed.get("group") or "manual"),
+                url=str(feed.get("url") or ""),
+                source="selector",
+                feed_id=feed_id,
+                enabled=feed.get("enabled", True) is not False,
+                dated=True,
+                detail=(
+                    f"CSS {feed.get('selector') or 'article'} · every "
+                    f"{feed.get('interval_min') or 60} min"
+                ),
             )
         )
     arxiv = data.get("arxiv") or {}
@@ -257,10 +281,20 @@ def _configured(root: Path) -> list[dict]:
             feed_id="manual",
             enabled=True,
             dated=True,
-            detail="Paste or a URL. The text is stripped, then scored like any other item.",
+            detail="Paste, or rip a URL. Hidden text, the injection guard, and the decider still run.",
         )
     )
     return rows
+
+
+def _rss_detail(feed: dict, rss: dict) -> str:
+    group = feed.get("group") or "none"
+    if feed.get("added_via"):
+        return (
+            f"Subscribed · group {group} · every {feed.get('interval_min') or 60} min"
+            f" · via {feed.get('added_via')}"
+        )
+    return f"RSS · group {group} · {rss.get('per_feed', 15)} items"
 
 
 def _row(**fields) -> dict:

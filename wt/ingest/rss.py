@@ -27,6 +27,18 @@ def fetch_rss(cfg: dict) -> tuple[list[Item], list[str]]:
                 errors.append(f"rss:{feed_id}: missing url")
                 continue
             groups = _groups(feed)
+            if feed.get("added_via"):
+                from wt.rip.robots import subscription_allowed
+                from wt.rip.ssrf import SsrfError
+
+                try:
+                    allowed, reason = subscription_allowed(str(url))
+                except SsrfError as exc:
+                    errors.append(f"rss:{feed_id}: {exc}")
+                    continue
+                if not allowed:
+                    errors.append(f"rss:{feed_id}: {reason}")
+                    continue
             try:
                 response = http.get(url)
                 response.raise_for_status()

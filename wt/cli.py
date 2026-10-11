@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import os
 import sys
 import time
 from pathlib import Path
@@ -64,7 +65,43 @@ def main(argv: list[str] | None = None) -> int:
     desk = sub.add_parser("desk", help="open the local desk (API plus the browser UI)")
     desk.add_argument("--port", type=int, default=47221, help="browser port")
     desk.add_argument("--api-port", type=int, default=8641)
+    desk.add_argument("--lan", action="store_true", help="also listen on the LAN; Shortcuts must send the rip token")
     desk.set_defaults(func=_cmd_desk)
+
+    rip = sub.add_parser("rip", help="rip one URL through the catalog pipeline")
+    rip.add_argument("url")
+    rip.add_argument("--note", default="")
+    rip.add_argument("--render", action="store_true", help="allow Playwright when a page is too thin")
+    rip.add_argument("--paste-file", type=Path, default=None)
+    rip.add_argument("--via", default="", help="refused: jina is not enabled")
+    rip.add_argument("--snapshot", action="store_true", help="refused: monolith snapshot is not enabled")
+    rip.add_argument("--json", action="store_true")
+    rip.add_argument("--db", type=Path, default=None)
+    rip.set_defaults(func=_cmd_rip)
+
+    subscribe = sub.add_parser("subscribe", help="find a feed for a URL and save it in sources.local.yaml")
+    subscribe.add_argument("url")
+    subscribe.add_argument("--pick", type=int, default=None)
+    subscribe.add_argument("--selector", default="")
+    subscribe.add_argument("--interval", type=int, default=60)
+    subscribe.add_argument("--cdio", action="store_true", help="refused: changedetection.io is not enabled")
+    subscribe.add_argument("--dry-run", action="store_true")
+    subscribe.add_argument("--db", type=Path, default=None)
+    subscribe.set_defaults(func=_cmd_subscribe)
+
+    mark = sub.add_parser("bookmarklet", help="print the rip bookmarklet for the desk port")
+    mark.add_argument("--port", type=int, default=47221)
+    mark.set_defaults(func=_cmd_bookmarklet)
+
+    inbox = sub.add_parser("inbox", help="accept one URL from a private ntfy topic")
+    inbox.add_argument("--once", action="store_true", help="read one message from stdin")
+    inbox.set_defaults(func=_cmd_inbox)
+
+    token = sub.add_parser("rip-token", help="print or create the Shortcut bearer token")
+    token.set_defaults(func=_cmd_rip_token)
+
+    sources = sub.add_parser("sources", help="list curated feeds and local subscriptions")
+    sources.set_defaults(func=_cmd_sources)
 
     export = sub.add_parser("export-kev", help="write Kev fine-tune JSONL from feedback")
     export.add_argument("--out", type=Path, default=Path("data/kev-train.jsonl"))
@@ -198,6 +235,7 @@ def _cmd_desk(args) -> int:
 
     root = project_root()
     web = root / "web"
+    api_host = "0.0.0.0" if args.lan else "127.0.0.1"
     api = subprocess.Popen(
         [
             sys.executable,
@@ -205,7 +243,7 @@ def _cmd_desk(args) -> int:
             "uvicorn",
             "wt.deskapp:app",
             "--host",
-            "127.0.0.1",
+            api_host,
             "--port",
             str(args.api_port),
         ],
@@ -218,7 +256,9 @@ def _cmd_desk(args) -> int:
             cwd=web,
         )
     print(f"Watch Tower desk  http://127.0.0.1:{args.port}", flush=True)
-    print(f"API               http://127.0.0.1:{args.api_port}", flush=True)
+    print(f"API               http://{api_host}:{args.api_port}", flush=True)
+    if args.lan:
+        print("LAN rips need Authorization: Bearer from `wt rip-token`.", flush=True)
     try:
         api.wait()
     except KeyboardInterrupt:
@@ -227,6 +267,180 @@ def _cmd_desk(args) -> int:
         api.terminate()
         if ui is not None:
             ui.terminate()
+    return 0
+
+
+def bookmarklet_source(port: int = 47221) -> str:
+    return (
+        "javascript:(()=>{window.open('http://127.0.0.1:"
+        + str(port)
+        + "/rip?url='+encodeURIComponent(location.href)+'&title='+encodeURIComponent(document.title)"
+        + "+'&sel='+encodeURIComponent(String(getSelection()).slice(0,4000)),'wt','width=520,height=720')})()"
+    )
+
+
+def _cmd_bookmarklet(args) -> int:
+    print(bookmarklet_source(args.port))
+    return 0
+
+
+def _cmd_rip_token(args) -> int:
+    path = project_root() / "data" / "rip.token"
+    return _print_token(path)
+
+
+def _print_token(path: Path) -> int:
+    import secrets
+
+    env = os.environ.get("WT_RIP_TOKEN", "").strip()
+    if env:
+        print(env)
+        return 0
+    if path.is_file():
+        print(path.read_text(encoding="utf-8").strip())
+        return 0
+    path.parent.mkdir(parents=True, exist_ok=True)
+    token = secrets.token_urlsafe(24)
+    path.write_text(token + "\n", encoding="utf-8")
+    print(token)
+    return 0
+
+
+def _cmd_rip(args) -> int:
+    if args.via or args.snapshot:
+        print("jina and snapshot are not enabled. Paste the text or rip the URL directly.", file=sys.stderr)
+        return 2
+    settings = Settings.from_env()
+    _apply_overrides(settings, args)
+    selection = ""
+    if args.paste_file:
+        selection = args.paste_file.read_text(encoding="utf-8")
+    from wt.rip.pipeline import RipError, commit_rip
+    from wt.store import Store
+
+    store = Store(settings.db_path)
+    try:
+        payload = commit_rip(
+            settings,
+            store,
+            args.url,
+            note=args.note,
+            selection=selection,
+            allow_render=args.render,
+        )
+    except RipError as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
+    finally:
+        store.close()
+    if args.json:
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+    else:
+        print(f"{payload.get('title') or '(no title)'}")
+        print(
+            f"method={payload.get('method')} words={payload.get('words')} "
+            f"pushes={payload.get('pushes')} id={payload.get('id') or '-'}"
+        )
+        for warning in payload.get("warnings") or []:
+            print(f"warning: {warning}")
+    if not payload.get("stored"):
+        return 1
+    return 0
+
+
+def _cmd_subscribe(args) -> int:
+    if args.cdio:
+        print("changedetection.io is not enabled.", file=sys.stderr)
+        return 2
+    settings = Settings.from_env()
+    _apply_overrides(settings, args)
+    from wt.rip.discover import discover
+    from wt.rip.pipeline import RipError, commit_subscribe
+    from wt.rip.ssrf import SsrfError
+
+    if args.dry_run:
+        try:
+            found = discover(args.url)
+        except SsrfError as exc:
+            print(str(exc), file=sys.stderr)
+            return 1
+        if not found.candidates and found.selector is None:
+            print("no feed")
+            for warning in found.warnings:
+                print(f"warning: {warning}")
+            return 1
+        for index, row in enumerate(found.candidates):
+            print(f"[{index}] {row.n_items} items  {row.title}  {row.url}")
+        if found.selector is not None:
+            print(
+                f"selector {found.selector.selector}  {len(found.selector.items)} items"
+            )
+        return 0
+    try:
+        payload = commit_subscribe(
+            settings,
+            args.url,
+            selector=args.selector,
+            interval_min=args.interval,
+            via="cli",
+            pick=args.pick,
+        )
+    except RipError as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
+    print(json.dumps(payload, ensure_ascii=False, indent=2))
+    discovery = payload.get("discovery") or {}
+    found = bool(payload.get("saved") or discovery.get("candidates") or discovery.get("selector"))
+    return 0 if found else 1
+
+
+def _cmd_inbox(args) -> int:
+    from wt.rip.inbox import accept_inbox_message, iter_ntfy
+
+    if args.once:
+        message = sys.stdin.read()
+        accepted = accept_inbox_message(message)
+        if accepted is None:
+            print("ignored")
+            return 0
+        print(json.dumps(accepted))
+        return 0
+    topic = os.environ.get("WT_NTFY_INBOX", "").strip()
+    if not topic:
+        print("Set WT_NTFY_INBOX to a private ntfy topic URL.", file=sys.stderr)
+        return 1
+    from wt.rip.pipeline import RipError, commit_rip, commit_subscribe
+
+    settings = Settings.from_env()
+    for message in iter_ntfy(topic):
+        accepted = accept_inbox_message(message)
+        if accepted is None:
+            continue
+        store = Store(settings.db_path)
+        try:
+            if accepted["mode"] == "subscribe":
+                payload = commit_subscribe(settings, accepted["url"], via="ntfy")
+            else:
+                payload = commit_rip(settings, store, accepted["url"])
+        except RipError as exc:
+            print(str(exc), file=sys.stderr)
+            continue
+        finally:
+            store.close()
+        print(json.dumps({"url": accepted["url"], "mode": accepted["mode"], "id": payload.get("id", "")}))
+    return 0
+
+
+def _cmd_sources(args) -> int:
+    settings = Settings.from_env()
+    data = load_sources(settings.sources_path)
+    for section in ("rss", "selector"):
+        feeds = (data.get(section) or {}).get("feeds") or []
+        for feed in feeds:
+            if not isinstance(feed, dict):
+                continue
+            via = feed.get("added_via") or "curated"
+            print(f"{section}:{feed.get('id')}  {via}  {feed.get('url')}")
     return 0
 
 

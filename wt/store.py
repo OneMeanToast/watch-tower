@@ -36,7 +36,11 @@ CREATE TABLE IF NOT EXISTS items (
   authors TEXT NOT NULL DEFAULT '[]',
   simhash TEXT NOT NULL,
   event_id TEXT NOT NULL DEFAULT '',
-  created_at TEXT NOT NULL
+  created_at TEXT NOT NULL,
+  rip_method TEXT NOT NULL DEFAULT '',
+  warnings_json TEXT NOT NULL DEFAULT '[]',
+  user_note TEXT NOT NULL DEFAULT '',
+  source_type TEXT NOT NULL DEFAULT ''
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_items_url_hash
   ON items(url_hash) WHERE url_hash IS NOT NULL;
@@ -92,6 +96,16 @@ CREATE TABLE IF NOT EXISTS intake (
   note TEXT NOT NULL DEFAULT '',
   created_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS rip_jobs (
+  id TEXT PRIMARY KEY,
+  url TEXT NOT NULL,
+  mode TEXT NOT NULL,
+  status TEXT NOT NULL,
+  result_item_id TEXT NOT NULL DEFAULT '',
+  error TEXT NOT NULL DEFAULT '',
+  result_json TEXT NOT NULL DEFAULT '{}',
+  created_at TEXT NOT NULL
+);
 """
 
 
@@ -145,6 +159,14 @@ class Store:
         item_cols = {row[1] for row in self.conn.execute("PRAGMA table_info(items)")}
         if "event_id" not in item_cols:
             self.conn.execute("ALTER TABLE items ADD COLUMN event_id TEXT NOT NULL DEFAULT ''")
+        for name, ddl in (
+            ("rip_method", "TEXT NOT NULL DEFAULT ''"),
+            ("warnings_json", "TEXT NOT NULL DEFAULT '[]'"),
+            ("user_note", "TEXT NOT NULL DEFAULT ''"),
+            ("source_type", "TEXT NOT NULL DEFAULT ''"),
+        ):
+            if name not in item_cols:
+                self.conn.execute(f"ALTER TABLE items ADD COLUMN {name} {ddl}")
         match_cols = {row[1] for row in self.conn.execute("PRAGMA table_info(matches)")}
         if "explanation" not in match_cols:
             self.conn.execute(
@@ -165,6 +187,20 @@ class Store:
               kind TEXT NOT NULL,
               method TEXT NOT NULL,
               note TEXT NOT NULL DEFAULT '',
+              created_at TEXT NOT NULL
+            )
+            """
+        )
+        self.conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS rip_jobs (
+              id TEXT PRIMARY KEY,
+              url TEXT NOT NULL,
+              mode TEXT NOT NULL,
+              status TEXT NOT NULL,
+              result_item_id TEXT NOT NULL DEFAULT '',
+              error TEXT NOT NULL DEFAULT '',
+              result_json TEXT NOT NULL DEFAULT '{}',
               created_at TEXT NOT NULL
             )
             """
@@ -700,6 +736,70 @@ class Store:
             "SELECT * FROM matches WHERE action = 'digest' ORDER BY created_at"
         ).fetchall()
 
+    def set_rip_meta(
+        self,
+        item_id: str,
+        *,
+        method: str,
+        warnings: list[str],
+        note: str = "",
+        source_type: str = "manual_rip",
+    ) -> None:
+        self.conn.execute(
+            """
+            UPDATE items
+            SET rip_method = ?, warnings_json = ?, user_note = ?, source_type = ?
+            WHERE id = ?
+            """,
+            (method, json.dumps(warnings), note, source_type, item_id),
+        )
+        self.conn.commit()
+
+    def create_rip_job(self, job_id: str, *, url: str, mode: str) -> None:
+        self.conn.execute(
+            """
+            INSERT INTO rip_jobs (id, url, mode, status, created_at)
+            VALUES (?, ?, ?, 'queued', ?)
+            """,
+            (job_id, url, mode, utcnow().isoformat()),
+        )
+        self.conn.commit()
+
+    def finish_rip_job(
+        self,
+        job_id: str,
+        *,
+        status: str,
+        item_id: str = "",
+        error: str = "",
+        result: dict | None = None,
+    ) -> None:
+        self.conn.execute(
+            """
+            UPDATE rip_jobs
+            SET status = ?, result_item_id = ?, error = ?, result_json = ?
+            WHERE id = ?
+            """,
+            (status, item_id, error, json.dumps(result or {}), job_id),
+        )
+        self.conn.commit()
+
+    def get_rip_job(self, job_id: str) -> dict | None:
+        row = self.conn.execute("SELECT * FROM rip_jobs WHERE id = ?", (job_id,)).fetchone()
+        if row is None:
+            return None
+        return _job_dict(row)
+
+    def list_rip_jobs(self, *, limit: int = 20) -> list[dict]:
+        rows = self.conn.execute(
+            "SELECT * FROM rip_jobs ORDER BY created_at DESC LIMIT ?",
+            (limit,),
+        ).fetchall()
+        return [_job_dict(row) for row in rows]
+
+    def count_rip_jobs(self) -> int:
+        return int(self.conn.execute("SELECT COUNT(*) FROM rip_jobs").fetchone()[0])
+
     def counts(self) -> dict[str, int]:
         def _count(table: str) -> int:
             return int(self.conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0])
@@ -710,6 +810,23 @@ class Store:
             "alerts": _count("alerts"),
             "feedback": _count("feedback"),
         }
+
+
+def _job_dict(row: sqlite3.Row) -> dict:
+    try:
+        result = json.loads(row["result_json"] or "{}")
+    except json.JSONDecodeError:
+        result = {}
+    return {
+        "id": row["id"],
+        "url": row["url"],
+        "mode": row["mode"],
+        "status": row["status"],
+        "result_item_id": row["result_item_id"] or "",
+        "error": row["error"] or "",
+        "result": result,
+        "created_at": row["created_at"],
+    }
 
 
 def cooldown_since(now: datetime, cooldown: timedelta) -> datetime:

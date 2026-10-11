@@ -13,7 +13,7 @@ from wt.decider import Decider, DeciderError, build_decider
 from wt.embed import Embedder, build_embedder, cosine
 from wt.events import confirm_same_event, same_event_signals
 from wt.extract import enrich_item
-from wt.guard import classify_text
+from wt.guard import GuardVerdict, classify_text
 from wt.indicators import load_indicators
 from wt.models import CycleReport, Decision, Indicator, Item, MatchResult
 from wt.normalize import (
@@ -41,7 +41,31 @@ def load_sources(path: str | Path) -> dict:
     data = yaml.safe_load(file.read_text(encoding="utf-8")) or {}
     if not isinstance(data, dict):
         raise ValueError(f"{file} must be a YAML mapping")
+    local = file.parent / "sources.local.yaml"
+    if local.is_file():
+        extra = yaml.safe_load(local.read_text(encoding="utf-8")) or {}
+        if not isinstance(extra, dict):
+            raise ValueError(f"{local} must be a YAML mapping")
+        data = _merge_sources(data, extra)
     return data
+
+
+def _merge_sources(base: dict, extra: dict) -> dict:
+    """Append local feeds onto the curated file. The curated file is not rewritten."""
+    out = dict(base)
+    for key, value in extra.items():
+        current = out.get(key)
+        if isinstance(current, dict) and isinstance(value, dict):
+            merged = dict(current)
+            for sub, subval in value.items():
+                if isinstance(merged.get(sub), list) and isinstance(subval, list):
+                    merged[sub] = [*merged[sub], *subval]
+                else:
+                    merged[sub] = subval
+            out[key] = merged
+        else:
+            out[key] = value
+    return out
 
 
 def load_fixture_items(path: str | Path) -> list[Item]:
@@ -87,6 +111,8 @@ def run_items(
     embedder: Embedder | None = None,
     decider: Decider | None = None,
     indicators: list[Indicator] | None = None,
+    force_guard: GuardVerdict | None = None,
+    replace_existing: bool = False,
 ) -> CycleReport:
     indicators = indicators or load_indicators(settings.indicators_dir)
     embedder = embedder or build_embedder(
@@ -104,7 +130,7 @@ def run_items(
     index_indicators(store, embedder, indicators)
     visible = [_visible_item(item) for item in items]
     visible, spam_dropped = filter_spam(visible, min_cluster=settings.spam_min_cluster)
-    fresh, duplicates = _dedupe(store, embedder, visible)
+    fresh, duplicates = _dedupe(store, embedder, visible, replace_existing=replace_existing)
     _assign_events(store, decider, fresh)
     results: list[MatchResult] = []
     for item, vector in fresh:
@@ -120,7 +146,11 @@ def run_items(
             store.update_item_text(item.id, enriched.text)
             store.record_intake(item.id, kind="extract", method="trafilatura", note=item.url)
             item = enriched
-        verdict = classify_text(item.document(), mode=settings.injection_guard)
+        verdict = (
+            force_guard
+            if force_guard is not None
+            else classify_text(item.document(), mode=settings.injection_guard)
+        )
         decisions = {} if verdict.flagged else decider.decide_many(item, candidates)
         for cand in candidates:
             if verdict.flagged:
@@ -373,9 +403,13 @@ def _assign_events(store: Store, decider: Decider, fresh: list[tuple[Item, list[
 
 
 def _dedupe(
-    store: Store, embedder: Embedder, items: list[Item]
+    store: Store,
+    embedder: Embedder,
+    items: list[Item],
+    *,
+    replace_existing: bool = False,
 ) -> tuple[list[tuple[Item, list[float]]], int]:
-    pending: list[tuple[Item, str | None, str, int]] = []
+    pending: list[tuple[Item, str | None, str, int, bool]] = []
     seen_urls: set[str] = set()
     seen_content: set[str] = set()
     seen_sims: list[int] = []
@@ -384,33 +418,36 @@ def _dedupe(
         hashed_url = url_hash(item.url)
         hashed_body = content_hash(item.title, item.text)
         hashed_sim = simhash(item.document())
-        if hashed_url and (hashed_url in seen_urls or store.url_exists(hashed_url)):
+        replacing = bool(
+            replace_existing and hashed_url and hashed_url not in seen_urls and store.url_exists(hashed_url)
+        )
+        if hashed_url and (hashed_url in seen_urls or store.url_exists(hashed_url)) and not replacing:
             duplicates += 1
             continue
-        if hashed_body in seen_content or store.content_exists(hashed_body):
+        if not replacing and (hashed_body in seen_content or store.content_exists(hashed_body)):
             duplicates += 1
             continue
-        if any((prev ^ hashed_sim).bit_count() <= INGEST_HAMMING for prev in seen_sims):
+        if not replacing and any((prev ^ hashed_sim).bit_count() <= INGEST_HAMMING for prev in seen_sims):
             duplicates += 1
             continue
-        if store.simhash_near(hashed_sim, max_hamming=INGEST_HAMMING):
+        if not replacing and store.simhash_near(hashed_sim, max_hamming=INGEST_HAMMING):
             duplicates += 1
             continue
         if hashed_url:
             seen_urls.add(hashed_url)
         seen_content.add(hashed_body)
         seen_sims.append(hashed_sim)
-        pending.append((item, hashed_url, hashed_body, hashed_sim))
+        pending.append((item, hashed_url, hashed_body, hashed_sim, replacing))
     if not pending:
         return [], duplicates
     vectors = embedder.embed([item.document() for item, *_ in pending], kind="document")
     kept: list[tuple[Item, list[float]]] = []
     batch: list[list[float]] = []
-    for (item, hashed_url, hashed_body, hashed_sim), vector in zip(pending, vectors):
-        if store.cosine_near(vector, min_cosine=INGEST_COSINE):
+    for (item, hashed_url, hashed_body, hashed_sim, replacing), vector in zip(pending, vectors):
+        if not replacing and store.cosine_near(vector, min_cosine=INGEST_COSINE):
             duplicates += 1
             continue
-        if any(cosine(vector, previous) >= INGEST_COSINE for previous in batch):
+        if not replacing and any(cosine(vector, previous) >= INGEST_COSINE for previous in batch):
             duplicates += 1
             continue
         store.upsert_item(

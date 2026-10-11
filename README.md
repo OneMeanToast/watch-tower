@@ -48,13 +48,34 @@ That starts the API on `127.0.0.1:8641` and the browser UI on [http://127.0.0.1:
 
 There is no login. A desk is a local view of one database, so two people on one Mac share the wire and keep their own lanes, digest cursor, and export set.
 
+### Rip a URL
+
+The catalog's manual upload is also a rip desk at [http://127.0.0.1:47221/rip](http://127.0.0.1:47221/rip). Opening that address, including from a bookmarklet, does not fetch the article. **Rip now** and **Subscribe** are the actions, and each one sends a CSRF token the page just minted. A POST without that token, or from another site, is refused.
+
+```bash
+wt rip https://example.com/story
+wt subscribe https://example.com/ --dry-run
+wt bookmarklet          # prints the bookmarklet for port 47221
+wt rip-token            # bearer token for the Share Sheet, stored in data/rip.token
+```
+
+**Bookmarklet, Safari or Chrome.** Show the bookmarks bar. Run `wt bookmarklet` and make a bookmark whose address is that whole `javascript:` line (Safari: add a bookmark, then edit the address; Chrome: new bookmark, paste into the URL field). `extras/bookmarklet.txt` is the same line. On a story, click the bookmark. A window opens on the desk with the page URL, title, and any text you had selected. Then click Rip now or Subscribe. The bookmarklet navigates to localhost. It does not `fetch()` the desk, which is what gets blocked as a local-network request.
+
+**Share Sheet, Mac or iPhone.** Shortcuts cannot be exported reliably from here, so the steps live in `extras/shortcuts/README.md`. Short version: new shortcut, show in Share Sheet, accept URLs and Safari pages and text, menu for Rip now or Subscribe. On the home Wi-Fi, POST `http://<mac>.local:47221/api/rip` with `Authorization: Bearer` set to the output of `wt rip-token` and a JSON body `{"url":"…","mode":"rip"}`. Off that Wi-Fi, POST the single URL to a private ntfy topic and let `wt inbox` pick it up (`WT_NTFY_INBOX` is the topic's `/json` URL). A message with no URL, or with more than one, is ignored. `wt desk --lan` is only needed if a phone should hit the API port directly. The desk on 47221 already accepts LAN connections and proxies `/api/rip`.
+
+`extras/launchd/` has two example plists. Replace `/Users/weston/watch-tower` with the checkout path before loading them.
+
+There is no paywall bypass. A short page is a paste or a stub. Playwright is optional (`pip install -e ".[render]"` and `playwright install chromium` on the Mac) and is not installed in this environment.
+
 ### Catalog
 
 Catalog is the source list the highway was missing. Every feed in `config/sources.yaml` is a row: RSS, arXiv, GDELT, OpenAlex, Bluesky, Mastodon, the World Monitor catalog, and X. A row is **armed** when the next live pull will use it, **off** when it is disabled (Bluesky, Mastodon with no hashtags, World Monitor, and X), **live** after a ping returns, **quiet** when the ping fails, and **seen** when items are already on the wire. Ping sources checks the configured URLs from this machine. It does not turn a disabled source on.
 
 The tether draws a moving line from a source to push, digest, suppressed, or drop only when that source produced a scored item. The published-date bar (24h, 7d, 30d, or a from/to range) filters the highway, the digest, the catalog, and the exports. Sources that have no publish date stay in the catalog and drop out of a dated window.
 
-Manual upload takes a paste or a URL. A URL is read with trafilatura when that extra is installed, otherwise the visible HTML text. Hidden text is stripped first. The result is scored against every indicator and listed under manual upload and extraction, next to any full-text extract the live pull already saved.
+Manual upload takes a paste or a URL. A URL with no paste runs the rip chain (Trafilatura strict, then recall, then readability, then an optional Playwright render, with PDF, Bluesky, and X oEmbed as special cases). A thin page can be stored from a paste. Hidden text is stripped, a hidden instruction is flagged, and the item is scored like any other upload. It is listed under manual upload and extraction, next to any full-text extract the live pull already saved.
+
+Subscriptions are written to `config/sources.local.yaml`, which is gitignored, and merged on top of `config/sources.yaml`. They show up in the catalog. The curated file is not rewritten. A subscription that `robots.txt` disallows is refused. A one-off rip only warns.
 
 Two export pathways sit on top of the older briefing formats. **OPML** is the source list. **Tether** is the packet from sources to decisions for the desk and the date window you have open. Kev JSONL is unchanged and still needs hit and miss labels.
 

@@ -212,6 +212,21 @@ def catalog(since: str | None = None, until: str | None = None) -> dict:
     return payload
 
 
+@app.get("/catalog/items")
+def catalog_items(
+    source: str | None = None,
+    feed_id: str | None = None,
+    since: str | None = None,
+    until: str | None = None,
+) -> list[dict]:
+    start, end = _bounds(since, until)
+    store = Store(desk_db())
+    try:
+        return store.list_items(source=source, feed_id=feed_id, since=start, until=end, limit=30)
+    finally:
+        store.close()
+
+
 @app.post("/catalog/probe")
 def catalog_probe() -> dict:
     root = project_root()

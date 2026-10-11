@@ -116,13 +116,19 @@ def to_tether(sources: list[dict], rows: list[dict], *, desk_name: str, since: s
         }
         for row in rows
     ]
+    counts = {"push": 0, "digest": 0, "suppressed": 0, "drop": 0}
+    for row in decisions:
+        action = str(row.get("action") or "")
+        if action in counts:
+            counts[action] += 1
     return json.dumps(
         {
             "desk": desk_name,
             "since": since,
             "until": until,
-            "sources": compact_sources,
+            "counts": {"sources": len(compact_sources), "decisions": len(decisions), **counts},
             "decisions": decisions,
+            "sources": compact_sources,
         },
         ensure_ascii=False,
         indent=2,

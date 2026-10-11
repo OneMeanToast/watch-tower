@@ -72,6 +72,10 @@ def test_catalog_window_upload_and_tether(tmp_path, monkeypatch):
     assert catalog.status_code == 200
     names = {row["id"]: row["items"] for row in catalog.json()["sources"]}
     assert names["arxiv:cs.CL"] >= 1
+    papers = client.get("/catalog/items", params={"source": "arxiv", "feed_id": "cs.CL"})
+    assert papers.status_code == 200
+    assert papers.json()
+    assert all(row["feed_id"] == "cs.CL" for row in papers.json())
     narrowed = client.get("/catalog", params={"since": "2026-10-06T00:00:00+00:00"})
     assert narrowed.status_code == 200
     kept = {row["title"] for row in narrowed.json()["items"]}

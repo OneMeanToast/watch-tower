@@ -103,6 +103,7 @@ export function CatalogView({
 }) {
   const [catalog, setCatalog] = useState<Catalog | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
+  const [focusItems, setFocusItems] = useState<WireItem[]>([]);
   const [error, setError] = useState("");
   const [pinging, setPinging] = useState(false);
   const [title, setTitle] = useState("");
@@ -121,6 +122,20 @@ export function CatalogView({
     // query is the published-date window.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
+
+  useEffect(() => {
+    const row = (catalog?.sources || []).find((item) => item.id === selected);
+    if (!row) {
+      setFocusItems([]);
+      return;
+    }
+    const params = new URLSearchParams(query.replace(/^&/, ""));
+    params.set("source", row.source);
+    if (row.feed_id) params.set("feed_id", row.feed_id);
+    readJson<WireItem[]>(`/api/catalog/items?${params.toString()}`)
+      .then(setFocusItems)
+      .catch(() => setFocusItems([]));
+  }, [selected, catalog, query]);
 
   const sources = catalog?.sources || [];
   const active = sources.filter((row) => row.status !== "off");
@@ -153,11 +168,6 @@ export function CatalogView({
     }
     return lines;
   }, [active, matches]);
-
-  const items = (catalog?.items || []).filter((item) => {
-    if (!focus) return true;
-    return item.source === focus.source && (focus.feed_id === "" || item.feed_id === focus.feed_id);
-  });
 
   const height = Math.max(520, active.length * 36 + 40);
 
@@ -246,6 +256,38 @@ export function CatalogView({
               );
             })}
           </svg>
+          <div className="relative z-10 max-h-[70vh] overflow-auto bg-black/75 px-4 py-3">
+            {!focus ? (
+              <p className="text-xs uppercase tracking-[0.18em] text-white/35">Select a source to read what it published.</p>
+            ) : (
+              <>
+                <p className="text-[11px] tracking-[0.2em] uppercase text-primary">{focus.name}</p>
+                <p className="mt-1 text-xs text-white/45">{focus.detail}</p>
+                <ul className="mt-3">
+                  {focusItems.length === 0 ? (
+                    <li className="py-2 text-sm text-white/40">No items in this window.</li>
+                  ) : (
+                    focusItems.map((item) => {
+                      const match = matches.find((rowMatch) => rowMatch.title === item.title && rowMatch.source === item.source);
+                      return (
+                        <li key={item.id} className="border-b border-white/10 py-2">
+                          <button className="block w-full text-left" onClick={() => match && onOpen(match.id)} disabled={!match}>
+                            <span className="text-[10px] tracking-widest text-white/35">
+                              {(item.published_at || "").slice(0, 16).replace("T", " ")}
+                            </span>
+                            <span className="mt-1 block text-sm text-white">{item.title}</span>
+                            <span className="text-[10px] uppercase tracking-widest text-white/35">
+                              {item.words} words{match ? ` · ${match.action}` : " · no lane"}
+                            </span>
+                          </button>
+                        </li>
+                      );
+                    })
+                  )}
+                </ul>
+              </>
+            )}
+          </div>
           <ul className="relative z-10 flex flex-row gap-2 border-white/10 px-3 py-4 md:flex-col md:justify-around md:border-l">
             {ACTIONS.map((action) => (
               <li key={action} className="border border-white/15 px-3 py-3">
@@ -260,7 +302,7 @@ export function CatalogView({
       <div className="grid gap-0 lg:grid-cols-[1fr_1fr]">
         <section className="border-b border-white/15 px-4 py-4 lg:border-b-0 lg:border-r md:px-6">
           <h3 className="text-[11px] tracking-[0.22em] uppercase text-white/45">
-            {focus ? focus.name : "Processed in this window"}
+            {focus ? focus.name : "Newest in this window"}
           </h3>
           {focus && (
             <p className="mt-2 text-sm text-white/55">
@@ -271,29 +313,15 @@ export function CatalogView({
             </p>
           )}
           <ul className="mt-3 border-t border-white/10">
-            {items.length === 0 ? (
-              <li className="py-3 text-sm text-white/40">Nothing with a publish date in this window.</li>
+            {(focus ? focusItems : catalog?.items || []).slice(0, 12).length === 0 ? (
+              <li className="py-3 text-sm text-white/40">Nothing in this window.</li>
             ) : (
-              items.slice(0, 12).map((item) => {
-                const match = matches.find((row) => row.title === item.title && row.source === item.source);
-                return (
-                  <li key={item.id} className="border-b border-white/10 py-2">
-                    <button
-                      className="block w-full text-left"
-                      onClick={() => match && onOpen(match.id)}
-                      disabled={!match}
-                    >
-                      <span className="text-[10px] tracking-widest text-white/35">{item.published_at.slice(0, 16).replace("T", " ")}</span>
-                      <span className="mt-1 block text-sm text-white">{item.title}</span>
-                      <span className="text-[10px] uppercase tracking-widest text-white/35">
-                        {item.source}
-                        {item.feed_id ? ` · ${item.feed_id}` : ""} · {item.words} words
-                        {match ? ` · ${match.action}` : " · no lane"}
-                      </span>
-                    </button>
-                  </li>
-                );
-              })
+              (focus ? focusItems : catalog?.items || []).slice(0, 12).map((item) => (
+                <li key={item.id} className="border-b border-white/10 py-2">
+                  <p className="text-[10px] tracking-widest text-white/35">{item.published_at.slice(0, 16).replace("T", " ")}</p>
+                  <p className="mt-1 text-sm text-white">{item.title}</p>
+                </li>
+              ))
             )}
           </ul>
           {dark.length > 0 && (

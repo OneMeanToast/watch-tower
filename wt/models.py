@@ -19,6 +19,8 @@ class Item(BaseModel):
     lang: str = "und"
     authors: list[str] = Field(default_factory=list)
     event_id: str = ""
+    # Indicator source keys besides the feed id, e.g. "ai-news" matches rss:ai-news.
+    groups: list[str] = Field(default_factory=list)
 
     def document(self) -> str:
         parts = [self.title.strip(), self.text.strip()]

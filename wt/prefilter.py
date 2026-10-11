@@ -14,6 +14,9 @@ def source_allowed(indicator: Indicator, item: Item) -> bool:
     keys = {item.source}
     if item.feed_id:
         keys.add(f"{item.source}:{item.feed_id}")
+    for group in item.groups:
+        if group:
+            keys.add(f"{item.source}:{group}")
     return bool(keys & set(indicator.sources))
 
 

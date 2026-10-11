@@ -48,6 +48,9 @@ def test_prefilter_cosine_keyword_and_blocks():
         _item("JEPA", source="rss", feed_id="sports"), [indicator], {"demo": 0.9}, top_k=3
     )
     assert wrong_source == []
+    grouped = _item("JEPA", source="rss", feed_id="hackernews-ai")
+    grouped.groups = ["ai-news"]
+    assert select_candidates(grouped, [indicator], {"demo": 0.9}, top_k=3)
 
 
 def test_keyword_hit_survives_when_cosine_is_low_and_top_k_applies():

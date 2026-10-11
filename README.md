@@ -199,7 +199,7 @@ An item passes the prefilter when its source matches and it is not blocked by `k
 
 `config/sources.yaml` lists RSS/Atom feeds, arXiv categories, GDELT queries, an OpenAlex search, and optional Bluesky and Mastodon settings.
 
-- **RSS / Atom** via feedparser.
+- **RSS / Atom** via feedparser. A feed's `group` is what indicators match: `group: ai-news` satisfies `rss:ai-news` even though the feed id is `huggingface-blog` or similar. The checked-in list adds labs and AI desks whose feeds returned XML (Hugging Face, OpenAI, Google AI, DeepMind, Simon Willison, MIT Technology Review, The Verge AI, BAIR, Microsoft Research, Interconnects, Latent Space, Sebastian Raschka, Last Week in AI, The Gradient, MarkTechPost, Lobsters AI) on top of the original three. `federal-register-ai` is `ai-policy`. Anthropic, Meta AI, and VentureBeat did not return a feed from here, so they are not in the list yet. The World Monitor catalog stays off.
 - **arXiv** via the public Atom API (`cs.AI`, `cs.CL`, `cs.LG` by default).
 - **GDELT DOC 2.0**, one request every five seconds. The article list returns titles and URLs, not full text, so the stored body starts as the headline. With `WT_FETCH_FULLTEXT=1` and trafilatura installed, a likely hit then fetches the page.
 - **OpenAlex**. Set `WT_OPENALEX_KEY` (free, from [openalex.org/settings/api](https://openalex.org/settings/api)) for the daily free budget. A few keyless calls still work.

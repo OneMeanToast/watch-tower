@@ -3,7 +3,7 @@ name: AI policy or regulation change
 description: >
   A government or regulator proposes or adopts a rule that changes how AI
   models can be trained, released, or sold.
-sources: [gdelt, rss:ai-news, arxiv]
+sources: [gdelt, rss:ai-news, rss:ai-policy, arxiv]
 prefilter:
   min_cosine: 0.32
   keywords_any: ["AI Act", "export control", "executive order", "model regulation"]

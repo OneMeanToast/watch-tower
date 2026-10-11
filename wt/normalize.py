@@ -76,6 +76,7 @@ def make_item(
     feed_id: str = "",
     authors: list[str] | None = None,
     lang: str | None = None,
+    groups: list[str] | None = None,
 ) -> Item | None:
     title_c = clean_text(strip_hidden(title))
     text_c = clean_text(strip_hidden(text))
@@ -95,4 +96,5 @@ def make_item(
         text=text_c,
         lang=lang or guess_lang(document),
         authors=list(authors or []),
+        groups=list(groups or []),
     )

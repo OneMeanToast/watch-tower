@@ -26,31 +26,62 @@ def fetch_rss(cfg: dict) -> tuple[list[Item], list[str]]:
             if not url:
                 errors.append(f"rss:{feed_id}: missing url")
                 continue
+            groups = _groups(feed)
             try:
                 response = http.get(url)
                 response.raise_for_status()
                 items.extend(
-                    items_from_xml(response.content, source="rss", feed_id=feed_id, limit=limit)
+                    items_from_xml(
+                        response.content,
+                        source="rss",
+                        feed_id=feed_id,
+                        limit=limit,
+                        groups=groups,
+                    )
                 )
             except Exception as exc:
                 errors.append(f"rss:{feed_id}: {exc}")
     return items, errors
 
 
-def items_from_xml(raw: str | bytes, *, source: str, feed_id: str, limit: int = 30) -> list[Item]:
+def items_from_xml(
+    raw: str | bytes,
+    *,
+    source: str,
+    feed_id: str,
+    limit: int = 30,
+    groups: list[str] | None = None,
+) -> list[Item]:
     parsed = feedparser.parse(raw)
     entries = list(parsed.entries or [])
     if not entries and getattr(parsed, "bozo", False):
         raise RuntimeError(getattr(parsed, "bozo_exception", "unreadable feed"))
     items: list[Item] = []
     for entry in entries[:limit]:
-        item = _entry_to_item(entry, source=source, feed_id=feed_id)
+        item = _entry_to_item(entry, source=source, feed_id=feed_id, groups=groups)
         if item is not None:
             items.append(item)
     return items
 
 
-def _entry_to_item(entry: Any, *, source: str, feed_id: str) -> Item | None:
+def _groups(feed: dict) -> list[str]:
+    found: list[str] = []
+    single = feed.get("group")
+    if single:
+        found.append(str(single))
+    extra = feed.get("groups") or []
+    if isinstance(extra, str):
+        extra = [extra]
+    for group in extra:
+        text = str(group).strip()
+        if text and text not in found:
+            found.append(text)
+    return found
+
+
+def _entry_to_item(
+    entry: Any, *, source: str, feed_id: str, groups: list[str] | None = None
+) -> Item | None:
     content = ""
     blocks = entry.get("content") or []
     if blocks and isinstance(blocks, list):
@@ -76,4 +107,5 @@ def _entry_to_item(entry: Any, *, source: str, feed_id: str) -> Item | None:
         text=content,
         ts=ts,
         authors=authors,
+        groups=groups,
     )

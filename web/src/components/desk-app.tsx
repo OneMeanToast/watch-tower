@@ -134,10 +134,6 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
   return (await response.text()) as T;
 }
 
-function pad(index: number) {
-  return String(index).padStart(2, "0");
-}
-
 function slug(name: string) {
   const base = name
     .toLowerCase()
@@ -149,8 +145,20 @@ function slug(name: string) {
 
 function stateTone(state: string) {
   if (state === "pass" || state === "push") return "text-primary";
-  if (state === "drop") return "text-white/35";
+  if (state === "drop") return "text-muted-foreground";
   return "text-foreground";
+}
+
+function countPhrase(count: number, singular: string, plural = `${singular}s`) {
+  return `${count} ${count === 1 ? singular : plural}`;
+}
+
+function actionLabel(action: string) {
+  if (action === "push") return "Alert";
+  if (action === "digest") return "Digest";
+  if (action === "suppressed") return "Held";
+  if (action === "drop") return "Set aside";
+  return action;
 }
 
 export function DeskApp() {
@@ -162,7 +170,7 @@ export function DeskApp() {
   const [digest, setDigest] = useState<Match[]>([]);
   const [status, setStatus] = useState<Status | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
-  const [busy, setBusy] = useState("Opening the wire");
+  const [busy, setBusy] = useState("Opening your desk");
   const [error, setError] = useState("");
   const [range, setRange] = useState<Range>(ALL_RANGE);
 
@@ -196,7 +204,7 @@ export function DeskApp() {
       try {
         const first = await api<Status>("/api/status");
         if ((first.counts?.matches || 0) === 0) {
-          setBusy("Replaying the fixture wire");
+          setBusy("Loading the sample");
           await api("/api/wire", { method: "POST", body: JSON.stringify({ mode: "demo" }) });
         }
         await refresh(initial);
@@ -209,7 +217,7 @@ export function DeskApp() {
   }, [refresh]);
 
   async function runWire(mode: "demo" | "live") {
-    setBusy(mode === "demo" ? "Replaying fixtures" : "Pulling live feeds");
+    setBusy(mode === "demo" ? "Replaying the sample" : "Checking live sources");
     setError("");
     try {
       await api("/api/wire", { method: "POST", body: JSON.stringify({ mode }) });
@@ -251,85 +259,88 @@ export function DeskApp() {
   const laneIds = desk?.indicators?.length ? desk.indicators : indicators.map((item) => item.id);
 
   return (
-    <div className="min-h-screen bg-black font-mono text-foreground">
-      <header className="border-b border-white/15 px-4 py-4 md:px-6">
-        <div className="flex flex-wrap items-end justify-between gap-4">
+    <div className="min-h-screen bg-background font-sans text-foreground">
+      <header className="border-b border-border px-5 py-5 md:px-8">
+        <div className="flex flex-wrap items-end justify-between gap-6">
           <div>
-            <p className="text-[11px] tracking-[0.42em] text-primary">WATCH TOWER</p>
-            <h1 className="mt-2 text-3xl leading-none tracking-tight text-white md:text-4xl">The wire</h1>
+            <h1 className="font-serif text-4xl leading-none tracking-tight text-foreground">Watch Tower</h1>
+            <p className="mt-2 text-sm text-muted-foreground">What arrived, and why it is on this desk.</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Button variant="secondary" size="sm" className="uppercase tracking-widest" onClick={() => runWire("demo")} disabled={!!busy}>
-              Replay fixtures
+            <Button variant="secondary" size="sm" onClick={() => runWire("demo")} disabled={!!busy}>
+              Replay the sample
             </Button>
-            <Button size="sm" className="uppercase tracking-widest" onClick={() => runWire("live")} disabled={!!busy}>
-              Pull live feeds
+            <Button size="sm" onClick={() => runWire("live")} disabled={!!busy}>
+              Check live sources
             </Button>
           </div>
         </div>
-        <div className="mt-4 flex gap-2 overflow-x-auto">
-          {desks.map((item, index) => (
+        <div className="mt-5 flex gap-2 overflow-x-auto">
+          {desks.map((item) => (
             <button
               key={item.id}
               onClick={() => chooseDesk(item.id)}
-              className={`shrink-0 border px-3 py-2 text-left ${
-                item.id === (desk?.id || deskId) ? "border-primary text-primary" : "border-white/15 text-white/55"
+              className={`shrink-0 rounded-lg border px-3 py-2 text-left text-sm ${
+                item.id === (desk?.id || deskId)
+                  ? "border-primary/70 bg-card text-foreground"
+                  : "border-border text-muted-foreground"
               }`}
             >
-              <span className="block text-[10px] tracking-widest">{pad(index + 1)}</span>
-              <span className="block text-xs uppercase tracking-[0.18em]">{item.name}</span>
+              {item.name}
             </button>
           ))}
         </div>
       </header>
 
-      <nav className="flex gap-0 overflow-x-auto border-b border-white/15">
-        {VIEWS.map((item, index) => (
+      <nav className="flex gap-1 overflow-x-auto border-b border-border px-3 md:px-5">
+        {VIEWS.map((item) => (
           <button
             key={item.id}
-            className={`px-4 py-3 text-left text-[11px] tracking-[0.22em] uppercase ${
-              view === item.id ? "bg-white text-black" : "text-white/55"
+            className={`px-3 py-3 text-sm ${
+              view === item.id
+                ? "border-b-2 border-primary text-foreground"
+                : "border-b-2 border-transparent text-muted-foreground"
             }`}
             onClick={() => setView(item.id)}
           >
-            {pad(index + 1)} {item.label}
-            {item.id === "digest" && digest.length > 0 ? ` ${digest.length}` : ""}
+            {item.label}
+            {item.id === "digest" && digest.length > 0 ? ` · ${digest.length}` : ""}
           </button>
         ))}
       </nav>
 
-      <div className="flex flex-wrap items-center gap-2 border-b border-white/10 px-4 py-2 md:px-6">
-        <span className="text-[10px] tracking-[0.22em] uppercase text-white/35">Published</span>
+      <div className="flex flex-wrap items-center gap-2 border-b border-border px-5 py-3 md:px-8">
+        <span className="text-xs text-muted-foreground">Published</span>
         {(["all", "24h", "7d", "30d"] as const).map((preset) => (
           <button
             key={preset}
-            className={`px-2 py-1 text-[11px] tracking-[0.16em] uppercase ${
-              range.preset === preset ? "bg-primary text-black" : "text-white/55"
+            className={`rounded-md px-2.5 py-1 text-xs ${
+              range.preset === preset ? "bg-primary text-primary-foreground" : "text-muted-foreground"
             }`}
             onClick={() => applyRange({ preset, from: "", to: "" })}
           >
             {preset === "all" ? "All" : preset}
           </button>
         ))}
-        <label className="flex items-center gap-1 text-[10px] uppercase tracking-widest text-white/35">
+        <label className="flex items-center gap-2 text-xs text-muted-foreground">
           From
           <input
             type="date"
-            className="border border-white/15 bg-black px-1 py-0.5 text-[11px] text-white"
+            className="rounded-md border border-border bg-card px-2 py-1 text-xs text-foreground"
             value={range.from}
             onChange={(event) => applyRange({ preset: "custom", from: event.target.value, to: range.to })}
           />
         </label>
-        <label className="flex items-center gap-1 text-[10px] uppercase tracking-widest text-white/35">
+        <label className="flex items-center gap-2 text-xs text-muted-foreground">
           To
           <input
             type="date"
-            className="border border-white/15 bg-black px-1 py-0.5 text-[11px] text-white"
+            className="rounded-md border border-border bg-card px-2 py-1 text-xs text-foreground"
             value={range.to}
             onChange={(event) => applyRange({ preset: "custom", from: range.from, to: event.target.value })}
           />
         </label>
-        <span className="ml-auto text-[11px] tracking-wide text-white/50">{busy || error || reportLine(status, desk)}</span>
+        <span className="ml-auto text-xs text-muted-foreground">{busy || error || reportLine(status, desk)}</span>
       </div>
 
       <main className="px-0 py-0">
@@ -388,9 +399,11 @@ export function DeskApp() {
 function reportLine(status: Status | null, desk: Desk | undefined) {
   const report = status?.last_report;
   const who = desk ? desk.name : "All lanes";
-  if (!report) return `${who} · ${status?.vector_backend || "sqlite"} · v${status?.version || ""}`;
-  const errors = report.errors?.length ? ` · ${report.errors.length} feed errors` : "";
-  return `${who} · ${report.mode} · ${report.items_new} new · ${report.pushes} push · ${report.digests} digest · ${report.embedder} · ${report.backend} · ${status?.vector_backend}${errors}`;
+  if (!report) return who;
+  const errors = report.errors?.length
+    ? ` · ${countPhrase(report.errors.length, "source failed", "sources failed")}`
+    : "";
+  return `${who} · ${report.mode} · ${report.items_new} new · ${countPhrase(report.pushes, "alert")} · ${countPhrase(report.digests, "digest")}${errors}`;
 }
 
 function Highway({
@@ -410,39 +423,38 @@ function Highway({
   const ids = [...laneIds];
   for (const id of lanes.keys()) if (!ids.includes(id)) ids.push(id);
   if (ids.length === 0) {
-    return <p className="px-6 py-8 text-sm text-white/50">This desk has no lanes yet.</p>;
+    return <p className="px-8 py-10 text-sm text-muted-foreground">This desk has no lanes yet.</p>;
   }
   return (
     <div>
-      {ids.map((id, index) => {
+      {ids.map((id) => {
         const rows = (lanes.get(id) || []).filter((row) => row.action === "push" || row.action === "digest" || row.action === "suppressed");
         return (
-          <section key={id} className="grid border-b border-white/15 md:grid-cols-[220px_1fr]">
-            <div className="border-b border-white/10 px-4 py-4 md:border-b-0 md:border-r md:border-white/15">
-              <p className="text-[11px] tracking-[0.28em] text-white/40">{pad(index + 1)}</p>
-              <h2 className="mt-2 text-sm uppercase tracking-[0.16em] text-white">{names.get(id) || id}</h2>
-              <p className="mt-2 text-[11px] text-white/40">
-                {rows.filter((row) => row.action === "push").length} push · {rows.filter((row) => row.action === "digest").length} digest
+          <section key={id} className="grid border-b border-border md:grid-cols-[220px_1fr]">
+            <div className="border-b border-border px-5 py-5 md:border-b-0 md:border-r">
+              <h2 className="font-serif text-lg leading-tight text-foreground">{names.get(id) || id}</h2>
+              <p className="mt-2 text-xs text-muted-foreground">
+                {countPhrase(rows.filter((row) => row.action === "push").length, "alert")} · {countPhrase(rows.filter((row) => row.action === "digest").length, "item for the digest", "items for the digest")}
               </p>
             </div>
-            <div className="flex gap-3 overflow-x-auto px-4 py-4">
+            <div className="flex gap-3 overflow-x-auto px-5 py-5">
               {rows.length === 0 ? (
-                <p className="self-center text-xs tracking-[0.2em] text-white/30 uppercase">Lane clear</p>
+                <p className="self-center text-sm text-muted-foreground">Nothing in this lane.</p>
               ) : (
                 rows.map((row) => (
                   <button
                     key={row.id}
                     onClick={() => onSelect(row.id)}
-                    className={`w-72 shrink-0 border px-3 py-3 text-left ${
-                      selected === row.id ? "border-primary" : "border-white/15"
-                    } ${row.action === "suppressed" ? "opacity-60" : "bg-black"}`}
+                    className={`w-72 shrink-0 rounded-lg border bg-card px-4 py-3 text-left ${
+                      selected === row.id ? "border-primary" : "border-border"
+                    } ${row.action === "suppressed" ? "opacity-60" : ""}`}
                   >
-                    <div className="mb-2 flex items-center justify-between text-[10px] tracking-[0.22em] uppercase">
-                      <span className={row.action === "push" ? "text-primary" : "text-white/50"}>{row.action}</span>
-                      <span className="text-white/40">{row.p_hit.toFixed(2)}</span>
+                    <div className="mb-2 flex items-center justify-between text-xs">
+                      <span className={row.action === "push" ? "text-primary" : "text-muted-foreground"}>{actionLabel(row.action)}</span>
+                      <span className="font-mono text-[11px] text-muted-foreground">{row.p_hit.toFixed(2)}</span>
                     </div>
-                    <p className="line-clamp-3 text-sm leading-snug text-white">{row.title}</p>
-                    <div className="mt-3 h-px bg-white/15">
+                    <p className="line-clamp-3 text-sm leading-snug text-foreground">{row.title}</p>
+                    <div className="mt-3 h-px bg-border">
                       <div className="h-px bg-primary" style={{ width: `${Math.round(Math.min(1, row.p_hit) * 100)}%` }} />
                     </div>
                   </button>
@@ -469,15 +481,15 @@ function Trace({
 }) {
   const [note, setNote] = useState("");
   const [labelError, setLabelError] = useState("");
-  if (!match) return <p className="px-6 py-8 text-sm text-white/50">Pick an item on the highway.</p>;
+  if (!match) return <p className="px-8 py-10 text-sm text-muted-foreground">Choose an item on the highway.</p>;
   return (
     <div className="grid lg:grid-cols-[240px_minmax(0,1fr)_minmax(0,1fr)]">
-      <ul className="max-h-[78vh] overflow-auto border-b border-white/15 lg:border-b-0 lg:border-r">
-        {matches.map((row, index) => (
+      <ul className="max-h-[78vh] overflow-auto border-b border-border lg:border-b-0 lg:border-r">
+        {matches.map((row) => (
           <li key={row.id}>
             <button
-              className={`block w-full border-b border-white/10 px-4 py-3 text-left ${
-                row.id === match.id ? "bg-white text-black" : "text-white/60"
+              className={`block w-full border-b border-border px-4 py-3 text-left ${
+                row.id === match.id ? "border-l-2 border-l-primary bg-card text-foreground" : "text-muted-foreground"
               }`}
               onClick={() => {
                 setNote("");
@@ -485,35 +497,33 @@ function Trace({
                 onSelect(row.id);
               }}
             >
-              <span className="text-[10px] tracking-[0.22em] uppercase">
-                {pad(index + 1)} {row.action}
-              </span>
-              <span className={`mt-1 block line-clamp-2 text-xs ${row.id === match.id ? "text-black" : "text-white"}`}>
+              <span className="text-xs">{actionLabel(row.action)}</span>
+              <span className={`mt-1 block line-clamp-2 text-sm ${row.id === match.id ? "text-foreground" : "text-foreground/80"}`}>
                 {row.title}
               </span>
             </button>
           </li>
         ))}
       </ul>
-      <article className="border-b border-white/15 px-5 py-5 lg:border-b-0 lg:border-r">
-        <p className="text-[11px] tracking-[0.28em] uppercase text-primary">{match.action}</p>
-        <h2 className="mt-3 text-2xl leading-tight text-white">{match.title}</h2>
+      <article className="border-b border-border px-6 py-6 lg:border-b-0 lg:border-r">
+        <p className="text-xs text-primary">{actionLabel(match.action)}</p>
+        <h2 className="mt-2 font-serif text-3xl leading-tight text-foreground">{match.title}</h2>
         {match.url ? (
           <a className="mt-3 block break-all text-xs text-primary underline" href={match.url}>
             {match.url}
           </a>
         ) : null}
-        <p className="mt-4 text-sm leading-relaxed text-white/70">{match.text.slice(0, 900)}</p>
+        <p className="mt-4 text-sm leading-relaxed text-foreground/80">{match.text.slice(0, 900)}</p>
         {match.snippets.length > 0 && (
           <ul className="mt-5 space-y-3">
             {match.snippets.map((snippet) => (
-              <li key={snippet} className="border-l border-primary pl-3 text-sm text-white">
+              <li key={snippet} className="border-l border-primary pl-3 text-sm text-foreground">
                 {snippet}
               </li>
             ))}
           </ul>
         )}
-        <p className="mt-5 text-xs leading-relaxed text-white/45">{match.explanation}</p>
+        <p className="mt-5 text-sm leading-relaxed text-muted-foreground">{match.explanation}</p>
         <div className="mt-5 flex gap-2">
           <Button
             size="sm"
@@ -547,20 +557,17 @@ function Trace({
             Miss
           </Button>
         </div>
-        {note && <p className="mt-3 text-xs text-white/50">{note}</p>}
-        {labelError && <p className="mt-3 text-xs text-primary">{labelError}</p>}
+        {note && <p className="mt-3 text-sm text-muted-foreground">{note}</p>}
+        {labelError && <p className="mt-3 text-sm text-primary">{labelError}</p>}
       </article>
       <ol>
-        {match.trace.map((step, index) => (
-          <li key={step.gate} className="grid grid-cols-[3rem_1fr] gap-3 border-b border-white/10 px-4 py-4">
-            <span className="text-xs text-white/35">{pad(index + 1)}</span>
-            <div>
-              <p className="text-xs tracking-[0.22em] uppercase">
-                <span className={stateTone(step.state)}>{step.gate}</span>
-                <span className="ml-3 text-white/35">{step.state}</span>
-              </p>
-              <p className="mt-2 text-sm leading-relaxed text-white/80">{step.detail}</p>
-            </div>
+        {match.trace.map((step) => (
+          <li key={step.gate} className="border-b border-border px-5 py-4">
+            <p className="text-sm">
+              <span className={stateTone(step.state)}>{step.gate}</span>
+              <span className="ml-3 text-muted-foreground">{step.state}</span>
+            </p>
+            <p className="mt-2 text-sm leading-relaxed text-foreground/85">{step.detail}</p>
           </li>
         ))}
       </ol>
@@ -578,19 +585,19 @@ function Indicators({ indicators, onSaved }: { indicators: Indicator[]; onSaved:
     setForm(indicator || null);
     setKeywords((indicator?.keywords_any || []).join(", "));
   }, [indicator]);
-  if (!form) return <p className="px-6 py-8 text-sm text-white/50">No indicators loaded.</p>;
+  if (!form) return <p className="px-8 py-10 text-sm text-muted-foreground">No indicators loaded.</p>;
   return (
     <div className="grid lg:grid-cols-[240px_1fr]">
-      <ul className="border-b border-white/15 lg:border-b-0 lg:border-r">
-        {indicators.map((item, index) => (
+      <ul className="border-b border-border lg:border-b-0 lg:border-r">
+        {indicators.map((item) => (
           <li key={item.id}>
             <button
-              className={`block w-full border-b border-white/10 px-4 py-3 text-left text-xs uppercase tracking-[0.14em] ${
-                item.id === form.id ? "bg-white text-black" : "text-white/55"
+              className={`block w-full border-b border-border px-4 py-3 text-left text-sm ${
+                item.id === form.id ? "border-l-2 border-l-primary bg-card text-foreground" : "text-muted-foreground"
               }`}
               onClick={() => setCurrent(item.id)}
             >
-              {pad(index + 1)} {item.name}
+              {item.name}
             </button>
           </li>
         ))}
@@ -625,23 +632,23 @@ function Indicators({ indicators, onSaved }: { indicators: Indicator[]; onSaved:
           }
         }}
       >
-        <p className="text-[11px] tracking-[0.28em] text-white/40">{form.id}</p>
+        <p className="font-mono text-xs text-muted-foreground">{form.id}</p>
         <Input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} />
         <Textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} />
         <Field label="Keywords, comma separated" value={keywords} onChange={setKeywords} />
         <div className="grid gap-3 md:grid-cols-2">
-          <Field label="min cosine" value={String(form.min_cosine)} onChange={(value) => setForm({ ...form, min_cosine: Number(value) })} />
-          <Field label="cooldown" value={form.cooldown} onChange={(value) => setForm({ ...form, cooldown: value })} />
-          <Field label="push confidence" value={String(form.push_min_confidence)} onChange={(value) => setForm({ ...form, push_min_confidence: Number(value) })} />
-          <Field label="uncertain floor" value={String(form.uncertain_min)} onChange={(value) => setForm({ ...form, uncertain_min: Number(value) })} />
+          <Field label="Minimum similarity" value={String(form.min_cosine)} onChange={(value) => setForm({ ...form, min_cosine: Number(value) })} />
+          <Field label="Cooldown" value={form.cooldown} onChange={(value) => setForm({ ...form, cooldown: value })} />
+          <Field label="Confidence to alert" value={String(form.push_min_confidence)} onChange={(value) => setForm({ ...form, push_min_confidence: Number(value) })} />
+          <Field label="Uncertain floor" value={String(form.uncertain_min)} onChange={(value) => setForm({ ...form, uncertain_min: Number(value) })} />
         </div>
-        <Field label="alert if" value={form.alert_if} onChange={(value) => setForm({ ...form, alert_if: value })} />
-        <Field label="digest if" value={form.digest_if || ""} onChange={(value) => setForm({ ...form, digest_if: value })} />
-        <p className="text-[11px] text-white/40">Sources {form.sources.join(", ") || "any"}</p>
+        <Field label="Alert when" value={form.alert_if} onChange={(value) => setForm({ ...form, alert_if: value })} />
+        <Field label="Digest when" value={form.digest_if || ""} onChange={(value) => setForm({ ...form, digest_if: value })} />
+        <p className="text-xs text-muted-foreground">Sources {form.sources.join(", ") || "any"}</p>
         <Button type="submit" size="sm">
           Save indicator
         </Button>
-        {message && <p className="text-xs text-white/55">{message}</p>}
+        {message && <p className="text-sm text-muted-foreground">{message}</p>}
       </form>
     </div>
   );
@@ -649,7 +656,7 @@ function Indicators({ indicators, onSaved }: { indicators: Indicator[]; onSaved:
 
 function Field({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
   return (
-    <label className="block text-[11px] uppercase tracking-[0.18em] text-white/45">
+    <label className="block text-sm text-muted-foreground">
       {label}
       <Input className="mt-2" value={value} onChange={(event) => onChange(event.target.value)} />
     </label>
@@ -671,26 +678,23 @@ function Digest({
     <section className="px-5 py-5">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="text-xs tracking-[0.28em] uppercase text-white">Unread digest</h2>
-          <p className="mt-2 max-w-xl text-sm text-white/55">{desk ? desk.brief : "Every lane."}</p>
+          <h2 className="font-serif text-3xl text-foreground">Unread</h2>
+          <p className="mt-2 max-w-xl text-sm text-muted-foreground">{desk ? desk.brief : "Every lane."}</p>
         </div>
         <Button size="sm" variant="secondary" onClick={() => onRead()} disabled={rows.length === 0}>
           Mark this desk read
         </Button>
       </div>
       {rows.length === 0 ? (
-        <p className="text-sm text-white/45">Nothing waiting. Pushes stay on the highway.</p>
+        <p className="text-sm text-muted-foreground">Nothing waiting. Alerts stay on the highway.</p>
       ) : (
-        <ul className="border-t border-white/15">
-          {rows.map((row, index) => (
-            <li key={row.id} className="border-b border-white/15">
-              <button className="grid w-full grid-cols-[3rem_1fr] gap-3 px-1 py-4 text-left" onClick={() => onOpen(row.id)}>
-                <span className="text-xs text-white/35">{pad(index + 1)}</span>
-                <span>
-                  <span className="text-[10px] tracking-[0.22em] uppercase text-white/40">{row.indicator_id}</span>
-                  <span className="mt-1 block text-white">{row.title}</span>
-                  <span className="mt-1 block text-sm text-white/50">{row.reason}</span>
-                </span>
+        <ul className="border-t border-border">
+          {rows.map((row) => (
+            <li key={row.id} className="border-b border-border">
+              <button className="block w-full px-1 py-4 text-left" onClick={() => onOpen(row.id)}>
+                <span className="text-xs text-muted-foreground">{row.indicator_id}</span>
+                <span className="mt-1 block text-foreground">{row.title}</span>
+                <span className="mt-1 block text-sm text-muted-foreground">{row.reason}</span>
               </button>
             </li>
           ))}
@@ -719,28 +723,28 @@ function Exports({ desk, query }: { desk: Desk | undefined; query: string }) {
   }
   return (
     <section className="px-5 py-5">
-      <h2 className="text-xs tracking-[0.28em] uppercase text-white">Export pathways</h2>
-      <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/55">
+      <h2 className="font-serif text-3xl text-foreground">Export</h2>
+      <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
         {desk?.name || "This desk"} only receives its own lanes, and the published-date window above is applied.
         Markdown is the briefing. CSV and JSON are the match packet. OPML is the source list. Tether is the
         source-to-decision packet: each configured source and the calls it produced. Kev JSONL still needs hit and miss labels.
       </p>
       <div className="mt-5 flex flex-wrap gap-2">
-        {formats.map((kind, index) => (
+        {formats.map((kind) => (
           <Button key={kind} size="sm" variant={format === kind ? "default" : "secondary"} onClick={() => load(kind)}>
-            {pad(index + 1)} {kind}
+            {kind}
           </Button>
         ))}
         <a
-          className="inline-flex h-7 items-center border border-white/20 px-3 text-xs uppercase tracking-widest text-white"
+          className="inline-flex h-8 items-center rounded-lg border border-border px-3 text-sm text-foreground"
           href={`/api/export?desk=${encodeURIComponent(desk?.id || "")}&format=${format}${query}`}
         >
           Download {format}
         </a>
       </div>
-      {error && <p className="mt-4 text-xs text-primary">{error}</p>}
+      {error && <p className="mt-4 text-sm text-primary">{error}</p>}
       {preview && (
-        <pre className="mt-5 max-h-[60vh] overflow-auto border border-white/15 p-4 text-xs leading-relaxed text-white/80">
+        <pre className="mt-5 max-h-[60vh] overflow-auto rounded-lg border border-border bg-card p-4 font-mono text-xs leading-relaxed text-foreground/85">
           {preview}
         </pre>
       )}
@@ -790,17 +794,17 @@ function Desks({
   if (!form) return null;
   return (
     <div className="grid lg:grid-cols-[240px_1fr]">
-      <div className="border-b border-white/15 lg:border-b-0 lg:border-r">
+      <div className="border-b border-border lg:border-b-0 lg:border-r">
         <ul>
-          {desks.map((item, index) => (
+          {desks.map((item) => (
             <li key={item.id}>
               <button
-                className={`block w-full border-b border-white/10 px-4 py-3 text-left text-xs uppercase tracking-[0.14em] ${
-                  item.id === form.id ? "bg-white text-black" : "text-white/55"
+                className={`block w-full border-b border-border px-4 py-3 text-left text-sm ${
+                  item.id === form.id ? "border-l-2 border-l-primary bg-card text-foreground" : "text-muted-foreground"
                 }`}
                 onClick={() => setCurrent(item.id)}
               >
-                {pad(index + 1)} {item.name}
+                {item.name}
               </button>
             </li>
           ))}
@@ -812,7 +816,7 @@ function Desks({
             createDesk().catch((exc) => setMessage(exc instanceof Error ? exc.message : "Could not open a desk"));
           }}
         >
-          <p className="text-[11px] tracking-[0.2em] uppercase text-white/40">New desk</p>
+          <p className="text-sm text-muted-foreground">New desk</p>
           <Input value={draftName} placeholder="Name" onChange={(event) => setDraftName(event.target.value)} />
           <Button type="submit" size="sm" variant="secondary">
             Open desk
@@ -832,7 +836,7 @@ function Desks({
           }
         }}
       >
-        <p className="text-[11px] tracking-[0.28em] text-white/40">{form.id}</p>
+        <p className="font-mono text-xs text-muted-foreground">{form.id}</p>
         <Input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} />
         <Textarea
           value={form.brief}
@@ -840,13 +844,13 @@ function Desks({
           onChange={(event) => setForm({ ...form, brief: event.target.value })}
         />
         <fieldset>
-          <legend className="text-[11px] uppercase tracking-[0.18em] text-white/45">Lanes</legend>
-          <p className="mb-3 mt-2 text-xs text-white/40">Leave every box clear to follow the whole wire.</p>
+          <legend className="text-sm text-foreground">Lanes</legend>
+          <p className="mb-3 mt-2 text-sm text-muted-foreground">Leave every box clear to follow the whole desk.</p>
           <div className="grid gap-2 md:grid-cols-2">
             {indicators.map((indicator) => {
               const on = form.indicators.includes(indicator.id);
               return (
-                <label key={indicator.id} className="flex items-center gap-2 text-sm text-white">
+                <label key={indicator.id} className="flex items-center gap-2 text-sm text-foreground">
                   <input
                     type="checkbox"
                     checked={on}
@@ -864,10 +868,10 @@ function Desks({
           </div>
         </fieldset>
         <fieldset>
-          <legend className="text-[11px] uppercase tracking-[0.18em] text-white/45">Exports</legend>
+          <legend className="text-sm text-foreground">Exports</legend>
           <div className="mt-3 flex flex-wrap gap-4">
             {EXPORTS.map((kind) => (
-              <label key={kind} className="flex items-center gap-2 text-xs uppercase tracking-widest">
+              <label key={kind} className="flex items-center gap-2 text-sm text-foreground">
                 <input
                   type="checkbox"
                   checked={form.exports.includes(kind)}
@@ -888,7 +892,7 @@ function Desks({
         <Button type="submit" size="sm">
           Save desk
         </Button>
-        {message && <p className="text-xs text-white/55">{message}</p>}
+        {message && <p className="text-sm text-muted-foreground">{message}</p>}
       </form>
     </div>
   );

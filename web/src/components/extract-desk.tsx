@@ -59,17 +59,21 @@ type Profile = {
 };
 
 const COLORS: Record<string, string> = {
-  Vulnerability: "#ff5a36",
-  SoftwareProduct: "#7eb6ff",
-  Organization: "#e7ff4a",
-  Company: "#d6ff6a",
-  PublicBody: "#ffd27a",
-  AIModel: "#c9a6ff",
-  Date: "#9ad7c2",
-  Quantity: "#f2c14e",
-  Regulation: "#ff9ec8",
-  Person: "#f0b429",
+  Vulnerability: "#c47064",
+  SoftwareProduct: "#6f97c4",
+  Organization: "#c6a574",
+  Company: "#b08a58",
+  PublicBody: "#c4a36a",
+  AIModel: "#9a8bb8",
+  Date: "#6ea898",
+  Quantity: "#c4a36a",
+  Regulation: "#c4899a",
+  Person: "#d4a06a",
 };
+
+const ASSERTED = "#c6a574";
+const SPECULATIVE = "#8a8478";
+const BOARD_INK = "#f3efe6";
 
 function colorFor(type: string) {
   return COLORS[type] || "#d8d2c8";
@@ -104,15 +108,19 @@ function Markup({ text, mentions, onPick }: { text: string; mentions: Mention[];
   }, [text, mentions]);
 
   return (
-    <p className="whitespace-pre-wrap text-sm leading-7 text-white/90">
+    <p className="whitespace-pre-wrap font-serif text-[17px] leading-8">
       {pieces.map((piece) =>
         piece.mention ? (
           <mark
             key={piece.key}
             title={`${piece.mention.type} · ${piece.mention.status}`}
             onClick={() => piece.mention?.entity_id && onPick(piece.mention.entity_id)}
-            className="cursor-pointer rounded px-0.5 text-black"
-            style={{ background: colorFor(piece.mention.type) }}
+            className="cursor-pointer rounded-sm px-0.5"
+            style={{
+              backgroundColor: `${colorFor(piece.mention.type)}2e`,
+              boxShadow: `inset 0 -1.5px 0 ${colorFor(piece.mention.type)}`,
+              color: "inherit",
+            }}
           >
             {piece.text}
           </mark>
@@ -145,7 +153,7 @@ function LayoutChart({ graph, onPick }: { graph: Graph; onPick: (id: string) => 
   });
   const at = Object.fromEntries(placed.map((node) => [node.id, node]));
   return (
-    <svg viewBox="-1.6 -1.55 3.2 3.1" className="h-80 w-full bg-black" role="img" aria-label="Entity link chart">
+    <svg viewBox="-1.6 -1.55 3.2 3.1" className="h-80 w-full bg-board" role="img" aria-label="Entity link chart">
       {graph.edges.map((edge) => {
         const source = at[edge.source];
         const target = at[edge.target];
@@ -157,7 +165,7 @@ function LayoutChart({ graph, onPick }: { graph: Graph; onPick: (id: string) => 
             y1={source.y}
             x2={target.x}
             y2={target.y}
-            stroke={edge.modality === "speculative" ? "#8a8478" : "#e7ff4a"}
+            stroke={edge.modality === "speculative" ? SPECULATIVE : ASSERTED}
             strokeWidth={edge.modality === "speculative" ? 0.008 : 0.014}
           />
         );
@@ -165,7 +173,7 @@ function LayoutChart({ graph, onPick }: { graph: Graph; onPick: (id: string) => 
       {placed.map((node) => (
         <g key={node.id} onClick={() => onPick(node.id)} className="cursor-pointer">
           <circle cx={node.x} cy={node.y} r={0.07} fill={colorFor(node.schema)} />
-          <text x={node.x + 0.09} y={node.y + 0.03} fill="#f4f1ea" fontSize="0.09">
+          <text x={node.x + 0.09} y={node.y + 0.03} fill={BOARD_INK} fontSize="0.09">
             {node.caption}
           </text>
         </g>
@@ -200,7 +208,7 @@ function LinkChart({ graph, onPick }: { graph: Graph; onPick: (id: string) => vo
             y: Math.sin(angle),
             size: 12,
             color: colorFor(node.schema),
-            labelColor: "#f4f1ea",
+            labelColor: BOARD_INK,
             forceLabel: true,
           });
         });
@@ -210,7 +218,7 @@ function LinkChart({ graph, onPick }: { graph: Graph; onPick: (id: string) => vo
           model.addEdge(edge.source, edge.target, {
             label: edge.type,
             size: edge.modality === "speculative" ? 0.6 : 1.4,
-            color: edge.modality === "speculative" ? "#8a8478" : "#e7ff4a",
+            color: edge.modality === "speculative" ? SPECULATIVE : ASSERTED,
           });
         });
         sigma = new Sigma(model, container, {
@@ -224,8 +232,7 @@ function LinkChart({ graph, onPick }: { graph: Graph; onPick: (id: string) => vo
           const drawn = canvas instanceof HTMLCanvasElement && canvasInkCount(canvas) >= 8;
           setGlChart(drawn);
           setNote(
-            `${graph.nodes.length} entities · ${graph.edges.length} links` +
-              (drawn ? "" : " · layout"),
+            `${graph.nodes.length} entities, ${graph.edges.length} links` + (drawn ? "." : ". Laid out in the browser."),
           );
         }, 350);
       } catch (exc) {
@@ -240,13 +247,13 @@ function LinkChart({ graph, onPick }: { graph: Graph; onPick: (id: string) => vo
 
   return (
     <div>
-      <div className="relative h-80 bg-black">
+      <div className="relative h-80 overflow-hidden rounded-lg bg-board">
         <div className={glChart ? "hidden" : "absolute inset-0"}>
           <LayoutChart graph={graph} onPick={onPick} />
         </div>
         <div id="extract-sigma" className={glChart ? "absolute inset-0" : "pointer-events-none absolute inset-0 opacity-0"} />
       </div>
-      <p className="mt-2 text-[11px] tracking-widest text-white/45 uppercase">{note}</p>
+      <p className="mt-2 text-xs text-muted-foreground">{note}</p>
     </div>
   );
 }
@@ -285,8 +292,8 @@ function Neighbourhood({ graph, focus }: { graph: Graph; focus: string }) {
             selector: "node",
             style: {
               label: "data(label)",
-              color: "#f4f1ea",
-              "background-color": "#e7ff4a",
+              color: BOARD_INK,
+              "background-color": ASSERTED,
               "font-size": 10,
               "text-valign": "bottom",
               "text-margin-y": 6,
@@ -294,7 +301,7 @@ function Neighbourhood({ graph, focus }: { graph: Graph; focus: string }) {
           },
           {
             selector: "edge",
-            style: { label: "data(label)", width: 1, "line-color": "#e7ff4a", "font-size": 8, color: "#f4f1ea", "curve-style": "bezier" },
+            style: { label: "data(label)", width: 1, "line-color": ASSERTED, "font-size": 8, color: BOARD_INK, "curve-style": "bezier" },
           },
         ],
         layout: { name: "cose", animate: false },
@@ -309,8 +316,8 @@ function Neighbourhood({ graph, focus }: { graph: Graph; focus: string }) {
   if (ego.nodes.length > 12) return null;
   return (
     <div>
-      <p className="mb-2 text-[11px] tracking-[0.22em] text-white/45 uppercase">Neighbourhood</p>
-      <div id="extract-cy" className="h-56 w-full border border-white/10" />
+      <p className="mb-2 text-sm text-muted-foreground">Around this entity</p>
+      <div id="extract-cy" className="h-56 w-full overflow-hidden rounded-lg bg-board" />
     </div>
   );
 }
@@ -380,50 +387,59 @@ export function ExtractDesk() {
     return [...types];
   }, [board]);
 
+  const graphNote =
+    board?.graph.backend === "ladybug" ? "Projected from the desk into LadybugDB." : "Read from the desk database.";
+
   return (
-    <section className="px-4 py-6 md:px-6">
+    <section className="px-5 py-8 md:px-8">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-[11px] tracking-[0.32em] text-primary uppercase">Forensic extract</p>
-          <h2 className="mt-2 text-2xl text-white">Spans, judgments, link chart</h2>
+          <h2 className="font-serif text-3xl text-foreground">Extract</h2>
+          <p className="mt-2 max-w-xl text-sm text-muted-foreground">Read the source. Decide what it actually says.</p>
         </div>
-        <p className="text-[11px] tracking-widest text-white/45 uppercase">
-          {board ? `${board.jobs_today} queued today · cap ${board.daily_cap}` : busy || "Idle"}
+        <p className="text-sm text-muted-foreground">
+          {board ? `${board.jobs_today} of ${board.daily_cap} extractions today` : busy || "Idle"}
         </p>
       </div>
-      {error && <p className="mt-4 border border-red-400/40 px-3 py-2 text-sm text-red-200">{error}</p>}
-      {!board && !error && <p className="mt-6 text-sm text-white/60">{busy || "Loading the fixture"}</p>}
-      {board && !board.document && <p className="mt-6 text-sm text-white/60">No document has been extracted yet.</p>}
+      {error && <p className="mt-4 rounded-lg border border-destructive/40 px-3 py-2 text-sm text-destructive">{error}</p>}
+      {!board && !error && <p className="mt-6 text-sm text-muted-foreground">{busy || "Loading the document"}</p>}
+      {board && !board.document && <p className="mt-6 text-sm text-muted-foreground">No document has been extracted yet.</p>}
       {board?.document && (
-        <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(18rem,0.8fr)]">
-          <div className="space-y-6">
-            <article className="border border-white/15 p-4">
+        <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1.4fr)_minmax(18rem,0.8fr)]">
+          <div className="space-y-8">
+            <article className="wt-paper rounded-lg px-6 py-6 shadow-sm md:px-8 md:py-8">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <p className="text-[10px] tracking-[0.28em] text-white/40 uppercase">{board.document.kind || "document"}</p>
-                  <h3 className="mt-1 text-lg text-white">{board.document.title}</h3>
+                  <p className="text-xs opacity-60">{board.document.kind || "Document"}</p>
+                  <h3 className="mt-1 font-serif text-2xl leading-snug">{board.document.title}</h3>
                 </div>
-                <Button size="sm" variant="secondary" className="uppercase tracking-widest" onClick={() => void star()} disabled={!!busy}>
-                  {board.document.starred ? "Starred" : "Star"}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-[rgba(28,25,21,0.18)] bg-transparent text-[var(--ink)] hover:bg-black/5"
+                  onClick={() => void star()}
+                  disabled={!!busy}
+                >
+                  {board.document.starred ? "Marked" : "Mark for later"}
                 </Button>
               </div>
-              <div className="mt-3 flex flex-wrap gap-2">
+              <div className="mt-4 flex flex-wrap gap-x-3 gap-y-1">
                 {legend.map((type) => (
-                  <span key={type} className="px-2 py-1 text-[10px] tracking-widest text-black uppercase" style={{ background: colorFor(type) }}>
+                  <span key={type} className="inline-flex items-center gap-1.5 text-xs opacity-80">
+                    <span className="h-2 w-2 rounded-full" style={{ background: colorFor(type) }} />
                     {type}
                   </span>
                 ))}
               </div>
-              <div className="mt-4">
+              <div className="mt-5">
                 <Markup text={board.document.text} mentions={board.mentions} onPick={(id) => void openEntity(id)} />
               </div>
             </article>
-            <article className="border border-white/15 p-4">
-              <h3 className="text-[11px] tracking-[0.28em] text-white/50 uppercase">
-                Link chart · {board.graph.backend === "ladybug" ? "LadybugDB" : "SQLite"}
-              </h3>
+            <article>
+              <h3 className="font-serif text-2xl text-foreground">How they connect</h3>
+              <p className="mt-1 text-xs text-muted-foreground">{graphNote}</p>
               {board.graph.nodes.length === 0 ? (
-                <p className="mt-3 text-sm text-white/60">No entities to draw.</p>
+                <p className="mt-3 text-sm text-muted-foreground">No entities to draw.</p>
               ) : (
                 <div className="mt-3">
                   <LinkChart graph={board.graph} onPick={(id) => void openEntity(id)} />
@@ -433,22 +449,24 @@ export function ExtractDesk() {
             {profile && <Neighbourhood graph={board.graph} focus={profile.id} />}
           </div>
           <div className="space-y-6">
-            <article className="border border-white/15 p-4">
-              <h3 className="text-[11px] tracking-[0.28em] text-white/50 uppercase">Review, least certain first</h3>
-              {board.review.length === 0 && <p className="mt-3 text-sm text-white/60">Nothing is waiting.</p>}
-              <ul className="mt-3 space-y-3">
+            <article className="rounded-lg border border-border bg-card p-5">
+              <h3 className="font-serif text-2xl text-foreground">Needs a look</h3>
+              <p className="mt-1 text-xs text-muted-foreground">Least certain first. Every choice is stored.</p>
+              {board.review.length === 0 && <p className="mt-3 text-sm text-muted-foreground">Nothing is waiting.</p>}
+              <ul className="mt-4 space-y-3">
                 {board.review.map((row) => (
-                  <li key={`${row.kind}-${row.id}`} className="border border-white/10 p-3">
-                    <p className="text-sm text-white">{row.label}</p>
-                    <p className="mt-1 text-[10px] tracking-widest text-white/40 uppercase">
+                  <li key={`${row.kind}-${row.id}`} className="rounded-lg border border-border p-3">
+                    <p className="text-sm text-foreground">{row.label}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">
                       {row.kind} · {row.type}
-                      {row.modality ? ` · ${row.modality}` : ""} · p {row.p == null ? "—" : row.p.toFixed(2)}
+                      {row.modality ? ` · ${row.modality}` : ""} ·{" "}
+                      <span className="font-mono">{row.p == null ? "—" : row.p.toFixed(2)}</span>
                     </p>
-                    <div className="mt-2 flex flex-wrap gap-2">
+                    <div className="mt-3 flex flex-wrap gap-2">
                       {row.kind === "judgment" ? (
                         <>
                           <Button size="sm" onClick={() => void act({ action: "accept", kind: "judgment", id: row.id })}>
-                            Merge
+                            Same entity
                           </Button>
                           <Button size="sm" variant="secondary" onClick={() => void act({ action: "reject", kind: "judgment", id: row.id })}>
                             Not the same
@@ -457,15 +475,15 @@ export function ExtractDesk() {
                       ) : (
                         <>
                           <Button size="sm" onClick={() => void act({ action: "accept", kind: row.kind, id: row.id })}>
-                            Accept
+                            Keep
                           </Button>
                           <Button size="sm" variant="secondary" onClick={() => void act({ action: "reject", kind: row.kind, id: row.id })}>
-                            Reject
+                            Dismiss
                           </Button>
                           {row.kind === "mention" && (
                             <>
                               <select
-                                className="border border-white/20 bg-black px-2 text-xs text-white"
+                                className="rounded-md border border-border bg-background px-2 text-xs text-foreground"
                                 value={editType[row.id] || row.type}
                                 onChange={(event) => setEditType((prev) => ({ ...prev, [row.id]: event.target.value }))}
                               >
@@ -480,7 +498,7 @@ export function ExtractDesk() {
                                 variant="secondary"
                                 onClick={() => void act({ action: "edit", kind: "mention", id: row.id, type: editType[row.id] || row.type })}
                               >
-                                Edit type
+                                Change type
                               </Button>
                             </>
                           )}
@@ -492,54 +510,54 @@ export function ExtractDesk() {
               </ul>
             </article>
             {profile ? (
-              <article className="border border-white/15 p-4">
-                <p className="text-[10px] tracking-[0.28em] text-primary uppercase">{profile.schema}</p>
-                <h3 className="mt-1 text-xl text-white">{profile.caption}</h3>
-                <p className="mt-3 text-[11px] tracking-widest text-white/40 uppercase">Aliases</p>
-                <p className="mt-1 text-sm text-white/80">{profile.aliases.length ? profile.aliases.join(" · ") : "No aliases yet."}</p>
-                <p className="mt-4 text-[11px] tracking-widest text-white/40 uppercase">Mentions</p>
+              <article className="rounded-lg border border-border bg-card p-5">
+                <p className="text-xs text-primary">{profile.schema}</p>
+                <h3 className="mt-1 font-serif text-2xl text-foreground">{profile.caption}</h3>
+                <p className="mt-4 text-xs text-muted-foreground">Aliases</p>
+                <p className="mt-1 text-sm text-foreground/90">{profile.aliases.length ? profile.aliases.join(" · ") : "No aliases yet."}</p>
+                <p className="mt-4 text-xs text-muted-foreground">Mentions</p>
                 <ul className="mt-2 space-y-2">
                   {profile.mentions.map((mention) => (
-                    <li key={mention.id} className="text-sm text-white/80">
-                      <span className="text-white">{mention.surface}</span>
-                      <span className="block text-white/50">{mention.context}</span>
+                    <li key={mention.id} className="text-sm text-foreground/90">
+                      <span className="text-foreground">{mention.surface}</span>
+                      <span className="block text-muted-foreground">{mention.context}</span>
                     </li>
                   ))}
-                  {profile.mentions.length === 0 && <li className="text-sm text-white/50">No mentions in context.</li>}
+                  {profile.mentions.length === 0 && <li className="text-sm text-muted-foreground">No mentions in context.</li>}
                 </ul>
-                <p className="mt-4 text-[11px] tracking-widest text-white/40 uppercase">Relations</p>
-                <ul className="mt-2 space-y-1 text-sm text-white/80">
+                <p className="mt-4 text-xs text-muted-foreground">Relations</p>
+                <ul className="mt-2 space-y-1 text-sm text-foreground/90">
                   {profile.relations.map((relation) => (
                     <li key={relation.id}>
                       {relation.head} — {relation.type} — {relation.tail}
-                      <span className="text-white/40"> ({relation.modality})</span>
+                      <span className="text-muted-foreground"> ({relation.modality})</span>
                     </li>
                   ))}
-                  {profile.relations.length === 0 && <li className="text-white/50">No relations.</li>}
+                  {profile.relations.length === 0 && <li className="text-muted-foreground">No relations.</li>}
                 </ul>
-                <p className="mt-4 text-[11px] tracking-widest text-white/40 uppercase">Timeline</p>
-                <ul className="mt-2 space-y-2 text-sm text-white/80">
+                <p className="mt-4 text-xs text-muted-foreground">Timeline</p>
+                <ul className="mt-2 space-y-2 text-sm text-foreground/90">
                   {profile.timeline.map((event) => (
                     <li key={event.id}>
-                      <span className="text-white/40">{event.when || "undated"}</span> {event.type}
+                      <span className="font-mono text-xs text-muted-foreground">{event.when || "undated"}</span> {event.type}
                       {event.cameo ? ` · CAMEO ${event.cameo}` : ""} · {event.trigger}
-                      <span className="block text-white/50">
+                      <span className="block text-muted-foreground">
                         {event.roles.map((role) => `${role.role}: ${role.caption}`).join(" · ")}
                       </span>
                     </li>
                   ))}
-                  {profile.timeline.length === 0 && <li className="text-white/50">No events.</li>}
+                  {profile.timeline.length === 0 && <li className="text-muted-foreground">No events.</li>}
                 </ul>
               </article>
             ) : (
-              <article className="border border-white/15 p-4">
-                <h3 className="text-[11px] tracking-[0.28em] text-white/50 uppercase">Entities</h3>
+              <article className="rounded-lg border border-border bg-card p-5">
+                <h3 className="font-serif text-2xl text-foreground">Entities</h3>
                 <ul className="mt-3 space-y-2">
                   {board.entities.map((entity) => (
                     <li key={entity.id}>
-                      <button className="text-left text-sm text-white hover:text-primary" onClick={() => void openEntity(entity.id)}>
+                      <button className="text-left text-sm text-foreground hover:text-primary" onClick={() => void openEntity(entity.id)}>
                         {entity.caption}
-                        <span className="ml-2 text-[10px] tracking-widest text-white/40 uppercase">{entity.schema}</span>
+                        <span className="ml-2 text-xs text-muted-foreground">{entity.schema}</span>
                       </button>
                     </li>
                   ))}

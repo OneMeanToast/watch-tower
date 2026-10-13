@@ -98,13 +98,13 @@ export function SpendView() {
   }
 
   if (!cost && !error) {
-    return <p className="px-6 py-8 text-sm text-white/50">{busy || "Reading the meter"}</p>;
+    return <p className="px-8 py-10 text-sm text-muted-foreground">{busy || "Reading the meter"}</p>;
   }
   if (!cost && error) {
     return (
-      <div className="px-6 py-8">
-        <p className="text-sm text-white">{error}</p>
-        <Button className="mt-4 uppercase tracking-widest" size="sm" onClick={() => void load()}>
+      <div className="px-8 py-10">
+        <p className="text-sm text-foreground">{error}</p>
+        <Button className="mt-4" size="sm" onClick={() => void load()}>
           Try again
         </Button>
       </div>
@@ -113,29 +113,29 @@ export function SpendView() {
   if (!cost) return null;
   const empty = cost.month_tokens === 0 && cost.today_tokens === 0 && cost.cached_hits === 0;
   return (
-    <section className="grid gap-6 px-4 py-6 md:grid-cols-[minmax(0,1fr)_20rem] md:px-6">
+    <section className="grid gap-8 px-5 py-8 md:grid-cols-[minmax(0,1fr)_20rem] md:px-8">
       <div>
-        <p className="text-[10px] tracking-[0.28em] uppercase text-white/40">Jev input tokens</p>
-        <h2 className="mt-2 text-sm tracking-[0.18em] uppercase">Spend</h2>
-        <div className="mt-6 grid gap-px bg-white/15 sm:grid-cols-3">
+        <h2 className="font-serif text-3xl text-foreground">Spend</h2>
+        <p className="mt-2 text-sm text-muted-foreground">What Jev has cost this desk. Output tokens are not billed.</p>
+        <div className="mt-6 grid gap-3 sm:grid-cols-3">
           <Meter label="Today" value={money(cost.today_usd)} detail={`${cost.today_tokens.toLocaleString()} input tokens`} />
           <Meter label="This month" value={money(cost.month_usd)} detail={`${cost.month_tokens.toLocaleString()} input tokens`} />
           <Meter label="Projected" value={money(cost.projected_usd)} detail="Straight line through the UTC month" />
         </div>
-        <dl className="mt-6 space-y-2 text-sm">
+        <dl className="mt-6 space-y-1 text-sm">
           <Row label="Last run" value={`${cost.last_run_tokens.toLocaleString()} input tokens · ${money(cost.last_run_usd)}`} />
-          <Row label="Cached hits this month" value={String(cost.cached_hits)} />
-          <Row label="Output tokens" value={cost.output_billed ? "billed" : "not billed"} />
+          <Row label="Cached this month" value={String(cost.cached_hits)} />
+          <Row label="Output tokens" value={cost.output_billed ? "Billed" : "Not billed"} />
           <Row label="Rate" value={`${money(cost.usd_per_mtok)} per million input tokens`} />
-          <Row label="Monthly cap" value={cost.monthly_usd > 0 ? money(cost.monthly_usd) : "no cap"} />
+          <Row label="Monthly cap" value={cost.monthly_usd > 0 ? money(cost.monthly_usd) : "No cap"} />
           <Row label="Daily warning" value={money(cost.daily_warn_usd)} />
         </dl>
         {empty ? (
-          <p className="mt-6 max-w-xl text-sm text-white/55">
-            No Jev calls in this desk database yet. A live pull with JEV_API_KEY set writes spend here.
-            Replay fixtures stays on the lexical decider and costs nothing. The command line writes its
-            own database, so a <span className="text-white">wt run</span> does not show up here unless
-            WT_DB points at the desk file.
+          <p className="mt-6 max-w-xl text-sm leading-relaxed text-muted-foreground">
+            No Jev calls in this desk database yet. A live pull with a key writes spend here.
+            The sample stays on the local decider and costs nothing. The command line writes its
+            own database, so a <span className="font-mono text-xs text-foreground">wt run</span> does not show up here unless
+            that file is the desk file.
           </p>
         ) : null}
         {cost.daily_warning ? (
@@ -144,35 +144,35 @@ export function SpendView() {
           </p>
         ) : null}
         {cost.over_budget ? (
-          <p className="mt-4 text-sm text-primary">The monthly cap is spent. New items stay on local Kev or the lexical decider.</p>
+          <p className="mt-4 text-sm text-primary">The monthly cap is spent. New items stay on the local decider.</p>
         ) : null}
-        <p className="mt-4 max-w-xl text-sm text-white/55">{cost.fallback}</p>
-        <p className="mt-2 max-w-xl text-xs text-white/35">{cost.note}</p>
-        {error ? <p className="mt-4 text-sm text-white">{error}</p> : null}
-        {busy ? <p className="mt-4 text-xs tracking-widest uppercase text-white/40">{busy}</p> : null}
+        <p className="mt-4 max-w-xl text-sm text-muted-foreground">{cost.fallback}</p>
+        <p className="mt-2 max-w-xl text-sm text-muted-foreground">{cost.note}</p>
+        {error ? <p className="mt-4 text-sm text-foreground">{error}</p> : null}
+        {busy ? <p className="mt-4 text-sm text-muted-foreground">{busy}</p> : null}
       </div>
       <form
-        className="border border-white/15 p-4"
+        className="h-fit rounded-lg border border-border bg-card p-5"
         onSubmit={(event) => {
           event.preventDefault();
           void save();
         }}
       >
-        <p className="text-[10px] tracking-[0.22em] uppercase text-white/40">Editable</p>
-        <label className="mt-4 block text-[10px] tracking-[0.18em] uppercase text-white/45">
+        <p className="font-serif text-xl text-foreground">Limits</p>
+        <label className="mt-4 block text-sm text-muted-foreground">
           Dollars per million input tokens
           <Input className="mt-1" value={rate} onChange={(event) => setRate(event.target.value)} inputMode="decimal" />
         </label>
-        <label className="mt-4 block text-[10px] tracking-[0.18em] uppercase text-white/45">
-          Monthly cap (0 means no cap)
+        <label className="mt-4 block text-sm text-muted-foreground">
+          Monthly cap, zero means none
           <Input className="mt-1" value={cap} onChange={(event) => setCap(event.target.value)} inputMode="decimal" />
         </label>
-        <label className="mt-4 block text-[10px] tracking-[0.18em] uppercase text-white/45">
+        <label className="mt-4 block text-sm text-muted-foreground">
           Daily warning
           <Input className="mt-1" value={warn} onChange={(event) => setWarn(event.target.value)} inputMode="decimal" />
         </label>
-        <Button className="mt-4 uppercase tracking-widest" size="sm" type="submit" disabled={!!busy}>
-          Save
+        <Button className="mt-5" size="sm" type="submit" disabled={!!busy}>
+          Save limits
         </Button>
       </form>
     </section>
@@ -181,19 +181,19 @@ export function SpendView() {
 
 function Meter({ label, value, detail }: { label: string; value: string; detail: string }) {
   return (
-    <div className="bg-black px-4 py-4">
-      <p className="text-[10px] tracking-[0.22em] uppercase text-white/40">{label}</p>
-      <p className="mt-2 font-mono text-lg text-primary">{value}</p>
-      <p className="mt-1 text-xs text-white/45">{detail}</p>
+    <div className="rounded-lg border border-border bg-card px-4 py-4">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="mt-2 font-mono text-lg text-foreground">{value}</p>
+      <p className="mt-1 text-xs text-muted-foreground">{detail}</p>
     </div>
   );
 }
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex flex-wrap justify-between gap-2 border-b border-white/10 py-2">
-      <dt className="text-[10px] tracking-[0.18em] uppercase text-white/40">{label}</dt>
-      <dd className="font-mono text-sm">{value}</dd>
+    <div className="flex flex-wrap justify-between gap-2 border-b border-border py-2">
+      <dt className="text-muted-foreground">{label}</dt>
+      <dd className="font-mono text-xs text-foreground">{value}</dd>
     </div>
   );
 }

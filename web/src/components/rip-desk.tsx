@@ -161,17 +161,16 @@ export function RipDesk() {
   const discovery = result?.discovery;
 
   return (
-    <main className="min-h-screen bg-black font-mono text-foreground">
-      <header className="border-b border-white/15 px-4 py-4 md:px-6">
-        <p className="text-[11px] tracking-[0.42em] text-primary">WATCH TOWER</p>
-        <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
-          <h1 className="text-3xl tracking-tight text-white">Rip</h1>
-          <Link href="/" className="text-[11px] uppercase tracking-[0.18em] text-white/50">
-            Back to the catalog
+    <main className="min-h-screen bg-background font-sans text-foreground">
+      <header className="border-b border-border px-5 py-6 md:px-8">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <h1 className="font-serif text-4xl tracking-tight text-foreground">Bring in a page</h1>
+          <Link href="/" className="text-sm text-muted-foreground">
+            Back to the desk
           </Link>
         </div>
-        <p className="mt-3 max-w-xl text-sm text-white/55">
-          A GET only shows this page. Rip now and Subscribe send a token the page just minted, so another site cannot fire them.
+        <p className="mt-3 max-w-xl text-sm text-muted-foreground">
+          Opening this page does nothing to your sources. Rip and Subscribe use a token this page just minted, so another site cannot fire them.
         </p>
       </header>
 
@@ -197,27 +196,27 @@ export function RipDesk() {
             </form>
           )}
 
-          {loading && <p className="text-sm text-white/50">Checking the URL…</p>}
+          {loading && <p className="text-sm text-muted-foreground">Checking the URL…</p>}
           {error && <p className="mt-3 text-sm text-primary">{error}</p>}
 
           {preview && (
-            <div className="mt-4 border border-white/15 p-4">
-              <p className="text-[10px] uppercase tracking-[0.22em] text-white/40">01 · {preview.kind}</p>
-              <h2 className="mt-2 text-lg text-white">{preview.title || preview.canonical}</h2>
-              <p className="mt-2 break-all text-xs text-white/45">{preview.canonical}</p>
-              <p className="mt-3 text-xs text-white/70">
+            <div className="mt-4 rounded-lg border border-border bg-card p-5">
+              <p className="text-xs text-muted-foreground">{preview.kind}</p>
+              <h2 className="mt-2 font-serif text-2xl text-foreground">{preview.title || preview.canonical}</h2>
+              <p className="mt-2 break-all font-mono text-xs text-muted-foreground">{preview.canonical}</p>
+              <p className="mt-3 text-sm text-foreground/80">
                 {preview.robots.allowed
                   ? "robots.txt allows this fetch."
-                  : `robots.txt warning: ${preview.robots.warning}. A rip can continue. A subscription will not.`}
+                  : `robots.txt warning: ${preview.robots.warning}. A one-time rip can continue. A subscription will not.`}
               </p>
               {preview.selection && (
-                <p className="mt-3 text-xs text-white/55">Selection saved with the page, {preview.selection.length} characters.</p>
+                <p className="mt-3 text-sm text-muted-foreground">Selection saved with the page, {preview.selection.length} characters.</p>
               )}
-              <label className="mt-4 block text-[10px] uppercase tracking-widest text-white/35">
+              <label className="mt-4 block text-sm text-muted-foreground">
                 Note
                 <Input className="mt-1" value={note} onChange={(event) => setNote(event.target.value)} />
               </label>
-              <label className="mt-3 block text-[10px] uppercase tracking-widest text-white/35">
+              <label className="mt-3 block text-sm text-muted-foreground">
                 Paste, if the page is thin
                 <Textarea className="mt-1" value={selection} onChange={(event) => setSelection(event.target.value)} />
               </label>
@@ -233,11 +232,11 @@ export function RipDesk() {
           )}
 
           {result && (
-            <div className="mt-4 border border-white/15 p-4">
-              <p className="text-[10px] uppercase tracking-[0.22em] text-primary">02 · {job?.status}</p>
-              {result.title && <h2 className="mt-2 text-lg text-white">{result.title}</h2>}
+            <div className="mt-4 rounded-lg border border-border bg-card p-5">
+              <p className="text-xs text-primary">{job?.status}</p>
+              {result.title && <h2 className="mt-2 font-serif text-2xl text-foreground">{result.title}</h2>}
               {result.method && (
-                <p className="mt-2 text-xs text-white/60">
+                <p className="mt-2 text-sm text-muted-foreground">
                   {result.method}
                   {typeof result.words === "number" ? ` · ${result.words} words` : ""}
                   {typeof result.pushes === "number" ? ` · ${result.pushes} push` : ""}
@@ -245,15 +244,15 @@ export function RipDesk() {
               )}
               {result.guard?.flagged && <p className="mt-2 text-xs text-primary">{result.guard.reason}</p>}
               {(result.warnings || []).map((warning) => (
-                <p key={warning} className="mt-1 text-xs text-white/50">
+                <p key={warning} className="mt-1 text-sm text-muted-foreground">
                   {warning}
                 </p>
               ))}
               {result.paste_required && (
-                <p className="mt-3 text-sm text-white/70">Nothing sturdy enough to store. Paste the article in the box and rip again.</p>
+                <p className="mt-3 text-sm text-foreground/80">Nothing sturdy enough to store. Paste the article in the box and rip again.</p>
               )}
               {result.saved && result.source && (
-                <p className="mt-3 text-sm text-white">
+                <p className="mt-3 text-sm text-foreground">
                   Saved {result.source.id} into the local source list. It shows up in the catalog on the next load.
                 </p>
               )}
@@ -262,21 +261,21 @@ export function RipDesk() {
                   {discovery.candidates.map((row, index) => (
                     <button
                       key={row.url}
-                      className="block w-full border border-white/15 px-3 py-2 text-left"
+                      className="block w-full rounded-lg border border-border px-3 py-3 text-left"
                       onClick={() => act("subscribe", { pick: index })}
                     >
-                      <span className="text-[10px] uppercase tracking-widest text-primary">{row.n_items} items</span>
-                      <span className="mt-1 block text-sm text-white">{row.title}</span>
+                      <span className="text-xs text-primary">{row.n_items} items</span>
+                      <span className="mt-1 block text-sm text-foreground">{row.title}</span>
                     </button>
                   ))}
                   {discovery.selector && discovery.selector.items.length > 0 && (
-                    <div className="border border-white/15 p-3">
-                      <p className="text-[10px] uppercase tracking-widest text-white/40">
+                    <div className="rounded-lg border border-border p-3">
+                      <p className="text-sm text-muted-foreground">
                         No feed. CSS {discovery.selector.selector} sees {discovery.selector.items.length} items.
                       </p>
                       <ul className="mt-2 space-y-1">
                         {discovery.selector.items.slice(0, 6).map((item) => (
-                          <li key={item.url || item.title} className="text-xs text-white/70">
+                          <li key={item.url || item.title} className="text-sm text-foreground/80">
                             {item.title}
                           </li>
                         ))}
@@ -298,17 +297,17 @@ export function RipDesk() {
         </div>
 
         <aside>
-          <h2 className="text-[11px] uppercase tracking-[0.22em] text-white/40">Recent rips</h2>
-          <ul className="mt-3 border-t border-white/10">
+          <h2 className="font-serif text-2xl text-foreground">Recent</h2>
+          <ul className="mt-3 border-t border-border">
             {recent.length === 0 ? (
-              <li className="py-3 text-sm text-white/40">None yet.</li>
+              <li className="py-3 text-sm text-muted-foreground">None yet.</li>
             ) : (
               recent.map((row) => (
-                <li key={row.id} className="border-b border-white/10 py-2">
-                  <p className="text-[10px] uppercase tracking-widest text-primary">
+                <li key={row.id} className="border-b border-border py-3">
+                  <p className="text-xs text-primary">
                     {row.mode || "rip"} · {row.status}
                   </p>
-                  <p className="mt-1 break-all text-xs text-white/70">{row.result?.title || row.url}</p>
+                  <p className="mt-1 break-all text-sm text-foreground/80">{row.result?.title || row.url}</p>
                 </li>
               ))
             )}

@@ -93,6 +93,14 @@ function statusLabel(status: string) {
   return "Off";
 }
 
+function actionLabel(action: string) {
+  if (action === "push") return "Alert";
+  if (action === "digest") return "Digest";
+  if (action === "suppressed") return "Held";
+  if (action === "drop") return "Set aside";
+  return action;
+}
+
 export function CatalogView({
   query,
   matches,
@@ -174,12 +182,11 @@ export function CatalogView({
 
   return (
     <div>
-      <div className="flex flex-wrap items-end justify-between gap-3 border-b border-white/15 px-4 py-4 md:px-6">
+      <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border px-5 py-6 md:px-8">
         <div>
-          <p className="text-[11px] tracking-[0.32em] text-primary">DATA CATALOG</p>
-          <h2 className="mt-2 text-2xl text-white">Live tether</h2>
-          <p className="mt-2 max-w-xl text-sm text-white/50">
-            Configured sources on the left, decisions on the right. A line only moves when something from that source was scored.
+          <h2 className="font-serif text-3xl text-foreground">Catalog</h2>
+          <p className="mt-2 max-w-xl text-sm text-muted-foreground">
+            Sources on the left, decisions on the right. A line only moves when something from that source was scored.
           </p>
         </div>
         <Button
@@ -199,32 +206,32 @@ export function CatalogView({
             }
           }}
         >
-          {pinging ? "Pinging feeds" : "Ping sources"}
+          {pinging ? "Checking sources" : "Check these sources"}
         </Button>
       </div>
       {error && <p className="px-6 py-2 text-xs text-primary">{error}</p>}
 
-      <div className="relative border-b border-white/15" style={{ minHeight: height }}>
+      <div className="relative border-b border-border" style={{ minHeight: height }}>
         <div className="tether-scan pointer-events-none absolute inset-x-0 top-0 h-16" />
         <div className="grid md:grid-cols-[minmax(220px,280px)_1fr_minmax(120px,160px)]" style={{ minHeight: height }}>
-          <ul className="relative z-10 border-b border-white/10 md:border-b-0 md:border-r">
-            {active.map((row, index) => (
+          <ul className="relative z-10 border-b border-border md:border-b-0 md:border-r">
+            {active.map((row) => (
               <li key={row.id}>
                 <button
-                  className={`flex w-full items-start gap-3 px-4 py-2 text-left ${
-                    selected === row.id ? "bg-white text-black" : "text-white"
+                  className={`flex w-full items-start gap-3 px-4 py-2.5 text-left ${
+                    selected === row.id ? "bg-card text-foreground" : "text-foreground"
                   }`}
                   onClick={() => setSelected(selected === row.id ? null : row.id)}
                 >
-                  <span className={`mt-1 h-2 w-2 shrink-0 ${row.status === "live" ? "catalog-live bg-primary" : "bg-white/30"}`} />
+                  <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${row.status === "live" ? "catalog-live bg-primary" : "bg-muted-foreground/40"}`} />
                   <span className="min-w-0">
-                    <span className="block text-[10px] tracking-[0.18em] uppercase opacity-60">
-                      {String(index + 1).padStart(2, "0")} {statusLabel(row.status)}
+                    <span className="block text-xs text-muted-foreground">
+                      {statusLabel(row.status)}
                       {row.dated ? "" : " · undated"}
                     </span>
                     <span className="block truncate text-sm">{row.name}</span>
-                    <span className={`block text-[10px] ${selected === row.id ? "text-black/60" : "text-white/35"}`}>
-                      {row.items} on the wire{row.group ? ` · ${row.group}` : ""}
+                    <span className="block text-xs text-muted-foreground">
+                      {row.items} items{row.group ? ` · ${row.group}` : ""}
                     </span>
                   </span>
                 </button>
@@ -257,28 +264,28 @@ export function CatalogView({
               );
             })}
           </svg>
-          <div className="relative z-10 max-h-[70vh] overflow-auto bg-black/75 px-4 py-3">
+          <div className="relative z-10 max-h-[70vh] overflow-auto bg-card/80 px-4 py-4">
             {!focus ? (
-              <p className="text-xs uppercase tracking-[0.18em] text-white/35">Select a source to read what it published.</p>
+              <p className="text-sm text-muted-foreground">Choose a source to read what it published.</p>
             ) : (
               <>
-                <p className="text-[11px] tracking-[0.2em] uppercase text-primary">{focus.name}</p>
-                <p className="mt-1 text-xs text-white/45">{focus.detail}</p>
+                <p className="font-serif text-xl text-foreground">{focus.name}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{focus.detail}</p>
                 <ul className="mt-3">
                   {focusItems.length === 0 ? (
-                    <li className="py-2 text-sm text-white/40">No items in this window.</li>
+                    <li className="py-2 text-sm text-muted-foreground">No items in this window.</li>
                   ) : (
                     focusItems.map((item) => {
                       const match = matches.find((rowMatch) => rowMatch.title === item.title && rowMatch.source === item.source);
                       return (
-                        <li key={item.id} className="border-b border-white/10 py-2">
+                        <li key={item.id} className="border-b border-border py-2">
                           <button className="block w-full text-left" onClick={() => match && onOpen(match.id)} disabled={!match}>
-                            <span className="text-[10px] tracking-widest text-white/35">
+                            <span className="font-mono text-[11px] text-muted-foreground">
                               {(item.published_at || "").slice(0, 16).replace("T", " ")}
                             </span>
-                            <span className="mt-1 block text-sm text-white">{item.title}</span>
-                            <span className="text-[10px] uppercase tracking-widest text-white/35">
-                              {item.words} words{match ? ` · ${match.action}` : " · no lane"}
+                            <span className="mt-1 block text-sm text-foreground">{item.title}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {item.words} words{match ? ` · ${actionLabel(match.action)}` : " · no lane"}
                             </span>
                           </button>
                         </li>
@@ -289,11 +296,11 @@ export function CatalogView({
               </>
             )}
           </div>
-          <ul className="relative z-10 flex flex-row gap-2 border-white/10 px-3 py-4 md:flex-col md:justify-around md:border-l">
+          <ul className="relative z-10 flex flex-row gap-2 px-3 py-4 md:flex-col md:justify-around md:border-l md:border-border">
             {ACTIONS.map((action) => (
-              <li key={action} className="border border-white/15 px-3 py-3">
-                <p className="text-[10px] tracking-[0.22em] uppercase text-white/40">{action}</p>
-                <p className={`mt-1 text-2xl ${action === "push" ? "text-primary" : "text-white"}`}>{decisions[action]}</p>
+              <li key={action} className="rounded-lg border border-border bg-card/70 px-3 py-3">
+                <p className="text-xs text-muted-foreground">{actionLabel(action)}</p>
+                <p className={`mt-1 font-serif text-3xl ${action === "push" ? "text-primary" : "text-foreground"}`}>{decisions[action]}</p>
               </li>
             ))}
           </ul>
@@ -301,46 +308,46 @@ export function CatalogView({
       </div>
 
       <div className="grid gap-0 lg:grid-cols-[1fr_1fr]">
-        <section className="border-b border-white/15 px-4 py-4 lg:border-b-0 lg:border-r md:px-6">
-          <h3 className="text-[11px] tracking-[0.22em] uppercase text-white/45">
+        <section className="border-b border-border px-5 py-6 lg:border-b-0 lg:border-r md:px-8">
+          <h3 className="font-serif text-2xl text-foreground">
             {focus ? focus.name : "Newest in this window"}
           </h3>
           {focus && (
-            <p className="mt-2 text-sm text-white/55">
+            <p className="mt-2 text-sm text-muted-foreground">
               {focus.detail}
               {focus.url ? ` · ${focus.url}` : ""}
               {focus.last_error ? ` · ${focus.last_error}` : ""}
-              {focus.probe_at ? ` · ping ${focus.probe_status || "fail"}` : ""}
+              {focus.probe_at ? ` · last check ${focus.probe_status || "failed"}` : ""}
             </p>
           )}
-          <ul className="mt-3 border-t border-white/10">
+          <ul className="mt-3 border-t border-border">
             {(focus ? focusItems : catalog?.items || []).slice(0, 12).length === 0 ? (
-              <li className="py-3 text-sm text-white/40">Nothing in this window.</li>
+              <li className="py-3 text-sm text-muted-foreground">Nothing in this window.</li>
             ) : (
               (focus ? focusItems : catalog?.items || []).slice(0, 12).map((item) => (
-                <li key={item.id} className="border-b border-white/10 py-2">
-                  <p className="text-[10px] tracking-widest text-white/35">{item.published_at.slice(0, 16).replace("T", " ")}</p>
-                  <p className="mt-1 text-sm text-white">{item.title}</p>
+                <li key={item.id} className="border-b border-border py-3">
+                  <p className="font-mono text-[11px] text-muted-foreground">{item.published_at.slice(0, 16).replace("T", " ")}</p>
+                  <p className="mt-1 text-sm text-foreground">{item.title}</p>
                 </li>
               ))
             )}
           </ul>
           {dark.length > 0 && (
-            <p className="mt-4 text-[11px] uppercase tracking-[0.16em] text-white/30">
-              Off · {dark.map((row) => row.name).join(" · ")}
+            <p className="mt-4 text-sm text-muted-foreground">
+              Turned off · {dark.map((row) => row.name).join(" · ")}
             </p>
           )}
         </section>
 
-        <section className="px-4 py-4 md:px-6">
+        <section className="px-5 py-6 md:px-8">
           <div className="flex flex-wrap items-end justify-between gap-3">
-            <h3 className="text-[11px] tracking-[0.22em] uppercase text-white/45">Manual upload and extraction</h3>
-            <Link href="/rip" className="text-[11px] uppercase tracking-[0.18em] text-primary">
-              Rip a URL
+            <h3 className="font-serif text-2xl text-foreground">Add something yourself</h3>
+            <Link href="/rip" className="text-sm text-primary">
+              Bring in a page
             </Link>
           </div>
-          <p className="mt-2 text-xs text-white/45">
-            A URL with an empty paste runs the rip chain: hidden text, the injection guard, then the same lanes as a feed.
+          <p className="mt-2 text-sm text-muted-foreground">
+            A URL with an empty paste is read, checked for hidden instructions, then scored like any other source.
           </p>
           <form
             className="mt-3 space-y-2"
@@ -358,8 +365,8 @@ export function CatalogView({
                 );
                 setUploadNote(
                   saved.duplicates
-                    ? "Already on the wire."
-                    : `Processed with ${saved.method}. ${saved.pushes} push.`,
+                    ? "Already on the desk."
+                    : `Added with ${saved.method}. ${saved.pushes} alert${saved.pushes === 1 ? "" : "s"}.`,
                 );
                 setTitle("");
                 setText("");
@@ -373,26 +380,26 @@ export function CatalogView({
             <Input value={title} placeholder="Title" onChange={(event) => setTitle(event.target.value)} />
             <Input value={url} placeholder="URL, optional" onChange={(event) => setUrl(event.target.value)} />
             <Textarea value={text} placeholder="Paste the article, or leave this empty and use the URL" onChange={(event) => setText(event.target.value)} />
-            <label className="block text-[10px] uppercase tracking-widest text-white/35">
+            <label className="block text-sm text-muted-foreground">
               Publish date
               <Input className="mt-1" type="datetime-local" value={published} onChange={(event) => setPublished(event.target.value)} />
             </label>
             <Button type="submit" size="sm">
-              Process onto the wire
+              Add to the desk
             </Button>
-            {uploadNote && <p className="text-xs text-white/55">{uploadNote}</p>}
+            {uploadNote && <p className="text-sm text-muted-foreground">{uploadNote}</p>}
           </form>
-          <ul className="mt-4 border-t border-white/10">
+          <ul className="mt-4 border-t border-border">
             {(catalog?.intake || []).length === 0 ? (
-              <li className="py-3 text-sm text-white/40">No manual uploads or full-text extracts yet.</li>
+              <li className="py-3 text-sm text-muted-foreground">Nothing added by hand yet.</li>
             ) : (
               catalog?.intake.slice(0, 8).map((row) => (
-                <li key={row.item_id} className="border-b border-white/10 py-2">
-                  <p className="text-[10px] tracking-[0.18em] uppercase text-primary">
+                <li key={row.item_id} className="border-b border-border py-3">
+                  <p className="text-xs text-primary">
                     {row.kind} · {row.method}
                   </p>
-                  <p className="mt-1 text-sm text-white">{row.title || row.note || row.item_id}</p>
-                  <p className="text-[10px] text-white/35">{row.published_at.slice(0, 16).replace("T", " ") || row.created_at.slice(0, 16)}</p>
+                  <p className="mt-1 text-sm text-foreground">{row.title || row.note || row.item_id}</p>
+                  <p className="font-mono text-[11px] text-muted-foreground">{row.published_at.slice(0, 16).replace("T", " ") || row.created_at.slice(0, 16)}</p>
                 </li>
               ))
             )}

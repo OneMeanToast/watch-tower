@@ -31,13 +31,13 @@ You should see at least one `[push]` block on stdout, including the LLM-JEPA wei
 
 ## Desk
 
-The desk is the screen for the same pipeline. It is a local site, not a hosted app: one shared wire, and a named desk per person.
+The desk is the screen for the same pipeline. It is a local site, not a hosted app: one shared wire, and a named desk per person. The room is quiet on purpose: a serif name, a paper document when you are reading a source, and a dark board for the link chart. Brass is reserved for the thing that needs a decision.
 
 ```bash
 wt desk
 ```
 
-That starts the API on `127.0.0.1:8641` and the browser UI on [http://127.0.0.1:47221](http://127.0.0.1:47221). The first open replays the fixture wire into `data/desk.db` when that database is empty. Replay fixtures replaces it. Pull live feeds uses the real sources and can fail a feed without taking the rest of the page down.
+That starts the API on `127.0.0.1:8641` and the browser UI on [http://127.0.0.1:47221](http://127.0.0.1:47221). The first open replays the fixture wire into `data/desk.db` when that database is empty. Replay the sample replaces it. Check live sources uses the real sources and can fail a feed without taking the rest of the page down.
 
 - **Highway.** One lane per indicator. Push, digest, and suppressed items sit on the lane. A clear lane is a quiet road.
 - **Trace.** Ten numbered gates, in the order an article actually moves: source, visible text, spam, dedupe, event, prefilter, injection, decision, cascade, policy. Hit and miss labels are recorded here.
@@ -69,11 +69,11 @@ There is no paywall bypass. A short page is a paste or a stub. Playwright is opt
 
 ### Catalog
 
-Catalog is the source list the highway was missing. Every feed in `config/sources.yaml` is a row: RSS, arXiv, GDELT, OpenAlex, Bluesky, Mastodon, the World Monitor catalog, and X. A row is **armed** when the next live pull will use it, **off** when it is disabled (Bluesky, Mastodon with no hashtags, World Monitor, and X), **live** after a ping returns, **quiet** when the ping fails, and **seen** when items are already on the wire. Ping sources checks the configured URLs from this machine. It does not turn a disabled source on.
+Catalog is the source list the highway was missing. Every feed in `config/sources.yaml` is a row: RSS, arXiv, GDELT, OpenAlex, Bluesky, Mastodon, the World Monitor catalog, and X. A row is **armed** when the next live pull will use it, **off** when it is disabled (Bluesky, Mastodon with no hashtags, World Monitor, and X), **live** after a ping returns, **quiet** when the ping fails, and **seen** when items are already on the wire. Check these sources pings the configured URLs from this machine. It does not turn a disabled source on.
 
 The tether draws a moving line from a source to push, digest, suppressed, or drop only when that source produced a scored item. The published-date bar (24h, 7d, 30d, or a from/to range) filters the highway, the digest, the catalog, and the exports. Sources that have no publish date stay in the catalog and drop out of a dated window.
 
-Manual upload takes a paste or a URL. A URL with no paste runs the rip chain (Trafilatura strict, then recall, then readability, then an optional Playwright render, with PDF, Bluesky, and X oEmbed as special cases). A thin page can be stored from a paste. Hidden text is stripped, a hidden instruction is flagged, and the item is scored like any other upload. It is listed under manual upload and extraction, next to any full-text extract the live pull already saved.
+Add something yourself takes a paste or a URL. A URL with no paste runs the rip chain (Trafilatura strict, then recall, then readability, then an optional Playwright render, with PDF, Bluesky, and X oEmbed as special cases). A thin page can be stored from a paste. Hidden text is stripped, a hidden instruction is flagged, and the item is scored like any other upload. It is listed under that form, next to any full-text extract the live pull already saved.
 
 Subscriptions are written to `config/sources.local.yaml`, which is gitignored, and merged on top of `config/sources.yaml`. They show up in the catalog. The curated file is not rewritten. A subscription that `robots.txt` disallows is refused. A one-off rip only warns.
 
